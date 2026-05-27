@@ -32,6 +32,7 @@ final class iCloudCoordinator {
     }
 
     var state: State = .checking
+    var lastSeenUpdatedAt: Date?
 
     private var metadataQuery: NSMetadataQuery?
     private var containerURL: URL?
@@ -98,7 +99,7 @@ final class iCloudCoordinator {
 
             let downloadStatus = item.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String
             if downloadStatus == NSMetadataUbiquitousItemDownloadingStatusCurrent {
-                self.state = .ready(bundleURL: url)
+                self.handleReady(bundleURL: url)
             } else {
                 let progress = item.value(forAttribute: NSMetadataUbiquitousItemPercentDownloadedKey) as? Double ?? 0
                 if progress > 0 {
@@ -110,4 +111,29 @@ final class iCloudCoordinator {
             }
         }
     }
+
+    /// When the bundle becomes available or its manifest changes, post a
+    /// notification so AppState can reopen the ArchiveReader against the
+    /// fresh data. Without this, a Mac re-archive while the iOS app is
+    /// open would never refresh the visible message list.
+    private func handleReady(bundleURL: URL) {
+        let manifest = try? ArchiveManifest.load(bundleURL: bundleURL)
+        let updatedAt = manifest?.lastUpdatedAt
+        if let previous = lastSeenUpdatedAt,
+           let updatedAt,
+           updatedAt > previous {
+            NotificationCenter.default.post(
+                name: .archiveBundleDidChange,
+                object: bundleURL
+            )
+        }
+        if let updatedAt {
+            lastSeenUpdatedAt = updatedAt
+        }
+        state = .ready(bundleURL: bundleURL)
+    }
+}
+
+extension Notification.Name {
+    static let archiveBundleDidChange = Notification.Name("ArchiveBundleDidChange")
 }

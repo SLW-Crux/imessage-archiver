@@ -48,12 +48,20 @@ struct ChatListView: View {
                 ThreadView(chat: chat, reader: reader)
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        SearchView(reader: reader)
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .accessibilityLabel("Search all messages")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         ArchiveInfoView(manifest: reader.manifest)
                     } label: {
                         Image(systemName: "info.circle")
-                            .accessibilityLabel("Archive Info")
+                            .accessibilityLabel("Archive info")
                     }
                 }
             }

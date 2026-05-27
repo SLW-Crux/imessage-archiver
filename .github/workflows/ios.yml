@@ -1,0 +1,86 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app || true
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Regenerate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Restore entitlements
+        working-directory: ios
+        run: |
+          cat > iMessageArchiver.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.developer.icloud-container-identifiers</key>
+              <array>
+                  <string>iCloud.com.slw.imessage-archiver</string>
+              </array>
+              <key>com.apple.developer.icloud-services</key>
+              <array>
+                  <string>CloudDocuments</string>
+              </array>
+              <key>com.apple.developer.ubiquity-container-identifiers</key>
+              <array>
+                  <string>iCloud.com.slw.imessage-archiver</string>
+              </array>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Resolve packages
+        working-directory: ios
+        run: xcodebuild -project iMessageArchiver.xcodeproj -resolvePackageDependencies
+
+      - name: Build (simulator, no signing)
+        working-directory: ios
+        run: |
+          DEST=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              if 'iOS' not in runtime: continue
+              for d in devices:
+                  if d.get('isAvailable') and 'iPhone' in d['name']:
+                      print(f\"platform=iOS Simulator,id={d['udid']}\")
+                      sys.exit(0)
+          print('platform=iOS Simulator,name=iPhone 16,OS=latest')
+          ")
+          echo "Using destination: $DEST"
+          xcodebuild \
+            -project iMessageArchiver.xcodeproj \
+            -scheme iMessageArchiver \
+            -destination "$DEST" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcpretty || exit 1

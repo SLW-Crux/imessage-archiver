@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imessage-archiver"
+version = "0.1.0"
+description = "macOS desktop app for archiving iMessage conversations and attachments"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+dependencies = [
+    "click>=8.1",
+    "rich>=13.0",
+    "pyobjc-core>=10.0",
+    "pyobjc-framework-Cocoa>=10.0",
+    "pyobjc-framework-Contacts>=10.0",
+    "pyobjc-framework-EventKit>=10.0",
+]
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.8"]
+build = ["pyinstaller>=6.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "black>=24.0",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+imessage-archiver = "imessage_archiver.cli.commands:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=imessage_archiver --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/imessage_archiver"]
+omit = ["*/gui/*"]

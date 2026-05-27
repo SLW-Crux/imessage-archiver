@@ -1,0 +1,29 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.spec.bak
+
+# macOS
+.DS_Store
+
+# NEVER commit anyone's Messages data
+*.db
+*.db-wal
+*.db-shm
+chat.db*
+.imessage-archiver/
+tests/fixtures/real/
+
+# Build artifacts
+*.app/
+*.dmg
+*.zip
+
+# Project-local Claude overrides (personal, not team settings)
+.claude/settings.local.json

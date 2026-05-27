@@ -390,11 +390,14 @@ def make_tiny_png() -> bytes:
 
 
 def write_attachment_file(guid: str, ext: str, content: bytes) -> str:
-    """Write a test attachment file, return the path string (~/... style)."""
-    rel = f"~/Library/Messages/Attachments/{guid[:2]}/{guid}/{guid}{ext}"
+    """Write a test attachment file, return the absolute path string.
+
+    We store absolute paths (not ~/Library style) so integration tests can
+    resolve them to LOCAL_PRESENT without touching ~/Library/Messages/.
+    """
     abs_path = ATTACHMENTS_DIR / f"{guid}{ext}"
     abs_path.write_bytes(content)
-    return rel
+    return str(abs_path)
 
 
 def make_attributed_body(text: str) -> bytes:

@@ -11,6 +11,7 @@ and writes a single, clean, WAL-free file atomically.
 from __future__ import annotations
 
 import hashlib
+import os
 import sqlite3
 import time
 from pathlib import Path
@@ -44,7 +45,7 @@ def snapshot(
         If *source* is not a valid SQLite database.
     """
     ts = int(time.time())
-    snap_dir = work_root / f"snapshot-{ts}"
+    snap_dir = work_root / f"snapshot-{ts}-{time.time_ns() % 1_000_000_000}"
     snap_dir.mkdir(parents=True, exist_ok=True)
     snap_path = snap_dir / "chat.db"
 

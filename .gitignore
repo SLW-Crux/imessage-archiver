@@ -20,6 +20,9 @@ chat.db*
 .imessage-archiver/
 tests/fixtures/real/
 
+# Allow synthetic test fixture databases (not real Messages data)
+!tests/fixtures/*.db
+
 # Build artifacts
 *.app/
 *.dmg
@@ -27,3 +30,4 @@ tests/fixtures/real/
 
 # Project-local Claude overrides (personal, not team settings)
 .claude/settings.local.json
+src/imessage_archiver.egg-info/

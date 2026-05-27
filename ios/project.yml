@@ -1,0 +1,84 @@
+name: iMessageArchiver
+options:
+  bundleIdPrefix: com.slw
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    DEVELOPMENT_TEAM: "1042783337"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.4.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "6.0.0"
+
+targets:
+  iMessageArchiver:
+    type: application
+    platform: iOS
+    bundleId: com.slw.imessage-archiver
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    resources:
+      - path: Resources
+    entitlements:
+      path: iMessageArchiver.entitlements
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: iMessage Archive
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen:
+          UIColorName: ""
+        NSUbiquitousContainers:
+          iCloud.com.slw.imessage-archiver:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: iMessage Archiver
+            NSUbiquitousContainerSupportedFolderLevels: Any
+        UIRequiredDeviceCapabilities:
+          - armv7
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_NAME: iMessageArchiver
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - package: GRDB
+    capabilities:
+      iCloud:
+        cloudKit: false
+        iCloudDocuments: true
+        customContainers:
+          - iCloud.com.slw.imessage-archiver
+
+  iMessageArchiverTests:
+    type: bundle.unit-test
+    platform: iOS
+    bundleId: com.slw.imessage-archiver.tests
+    sources:
+      - path: Tests
+    dependencies:
+      - target: iMessageArchiver
+      - package: GRDB
+    settings:
+      base:
+        DEVELOPMENT_TEAM: "1042783337"
+        CODE_SIGN_STYLE: Automatic

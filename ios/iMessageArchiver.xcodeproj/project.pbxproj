@@ -1,0 +1,569 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0000C49B1E7A218AA0D0B4F7 /* NoArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F092DBBC94A4D46895F3BEFB /* NoArchiveView.swift */; };
+		0656A46E6B88DD0E5B49EB6B /* AttachmentGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */; };
+		07ACE7776D47533286F3DA51 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF9A3B13CDE126C07084C05 /* RootView.swift */; };
+		100BA1372FA0D17C5E5179CF /* ArchiveInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45613E86FFD40EE92E8387D /* ArchiveInfoView.swift */; };
+		10DCD9EB0D9705C95CD5184A /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6817AC430A04F3F777679 /* ChatListView.swift */; };
+		3B33A3DDAAD7898774A52432 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51725FA2022930096F27A42D /* SearchView.swift */; };
+		42F4D24E594A03BCD3260173 /* iMessageArchiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */; };
+		57FB995079D8E45E2055E0DC /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 36AD865687D5E22802D18618 /* GRDB */; };
+		5A50E39468E28C15A76C3D9E /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0B692BC5F2567C6326B828 /* Chat.swift */; };
+		5DC84988549ADF2DDF0135F0 /* TarReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5327F4A7DB0B4FA7BC80895B /* TarReader.swift */; };
+		62FB7350FC719A575B87F795 /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54ED66CB76580292C8852271 /* MessageBubbleView.swift */; };
+		645D1C7EFD819443E6671EF3 /* ArchiveManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F30103889EF3C337C9E8BF4 /* ArchiveManifest.swift */; };
+		6556E107D86EF425B9E9D4C7 /* Attachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A77DADCAE24BB8049D4CB3 /* Attachment.swift */; };
+		752C5B4E20BC567363C60337 /* ArchiveReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821DD273186D880474C000C2 /* ArchiveReader.swift */; };
+		76947C3AFC132C0E21510144 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CCC8E8F50C965564FB672C /* AppState.swift */; };
+		885E56615BA4FD488B234659 /* TarReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91874023B0C17B1B3CCA45DE /* TarReaderTests.swift */; };
+		8AEEE5D502FEC225A3DD8287 /* iCloudCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */; };
+		A50A9B60BFAFD3D4A2878D1B /* ThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126B174C6BBC77EABB3C9C5B /* ThreadView.swift */; };
+		AF9812822207241150F1C5C9 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EB4D02CC37A2172500E72CFE /* GRDB */; };
+		BA365D5FF3E81447FBF8CE7E /* ChatRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9FF0D63C62871D4619B1ECB /* ChatRowView.swift */; };
+		BC7C8CE44ABE4B31C2A2AA35 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEEF1850DEA6E7197739F0F1 /* Message.swift */; };
+		C14D36C255EDA7CE2D57A102 /* ReactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A2A1BB88D9A2B2044A1929 /* ReactionsView.swift */; };
+		D44634E991BA7CA64F7389CD /* ArchiveReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */; };
+		EA5E76539767ED8FC072523D /* AttachmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		21C3A7ACF8D2E4192AD842D7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3937EAD14CCBCEADAE44A14A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0669B9307CEA9DAFBF72DF13;
+			remoteInfo = iMessageArchiver;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		126B174C6BBC77EABB3C9C5B /* ThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadView.swift; sourceTree = "<group>"; };
+		2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudCoordinator.swift; sourceTree = "<group>"; };
+		3F30103889EF3C337C9E8BF4 /* ArchiveManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveManifest.swift; sourceTree = "<group>"; };
+		43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentGridView.swift; sourceTree = "<group>"; };
+		4E0B692BC5F2567C6326B828 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
+		51725FA2022930096F27A42D /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		5327F4A7DB0B4FA7BC80895B /* TarReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarReader.swift; sourceTree = "<group>"; };
+		54ED66CB76580292C8852271 /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
+		6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iMessageArchiverApp.swift; sourceTree = "<group>"; };
+		75F6817AC430A04F3F777679 /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
+		7B250064158475CE1BF99180 /* iMessageArchiver.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iMessageArchiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		821DD273186D880474C000C2 /* ArchiveReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveReader.swift; sourceTree = "<group>"; };
+		86A77DADCAE24BB8049D4CB3 /* Attachment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attachment.swift; sourceTree = "<group>"; };
+		8AF9A3B13CDE126C07084C05 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		91874023B0C17B1B3CCA45DE /* TarReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarReaderTests.swift; sourceTree = "<group>"; };
+		91A2A1BB88D9A2B2044A1929 /* ReactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactionsView.swift; sourceTree = "<group>"; };
+		A67D98C9EBDB22C1D578A26E /* iMessageArchiverTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = iMessageArchiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentCache.swift; sourceTree = "<group>"; };
+		B6CCC8E8F50C965564FB672C /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveReaderTests.swift; sourceTree = "<group>"; };
+		CEEF1850DEA6E7197739F0F1 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		D9FF0D63C62871D4619B1ECB /* ChatRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRowView.swift; sourceTree = "<group>"; };
+		F092DBBC94A4D46895F3BEFB /* NoArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoArchiveView.swift; sourceTree = "<group>"; };
+		F45613E86FFD40EE92E8387D /* ArchiveInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveInfoView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		407505FF3FE4CD709A76717A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF9812822207241150F1C5C9 /* GRDB in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5EBBF53C46CC9B1396FEBF96 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				57FB995079D8E45E2055E0DC /* GRDB in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1928F2765BFC814EF85964EB /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F45613E86FFD40EE92E8387D /* ArchiveInfoView.swift */,
+				43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */,
+				75F6817AC430A04F3F777679 /* ChatListView.swift */,
+				D9FF0D63C62871D4619B1ECB /* ChatRowView.swift */,
+				54ED66CB76580292C8852271 /* MessageBubbleView.swift */,
+				F092DBBC94A4D46895F3BEFB /* NoArchiveView.swift */,
+				91A2A1BB88D9A2B2044A1929 /* ReactionsView.swift */,
+				8AF9A3B13CDE126C07084C05 /* RootView.swift */,
+				51725FA2022930096F27A42D /* SearchView.swift */,
+				126B174C6BBC77EABB3C9C5B /* ThreadView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		227F335FB281C5A400765A6F /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				89EC8D3192783296DDB092A1 /* App */,
+				6689E08A2C562CBE1F3F222D /* Models */,
+				5154D4439B51DF67015067F5 /* Persistence */,
+				1928F2765BFC814EF85964EB /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		47D25FC7D7E099F6D4AD1321 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */,
+				91874023B0C17B1B3CCA45DE /* TarReaderTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		5154D4439B51DF67015067F5 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				821DD273186D880474C000C2 /* ArchiveReader.swift */,
+				AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */,
+				2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */,
+				5327F4A7DB0B4FA7BC80895B /* TarReader.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		6689E08A2C562CBE1F3F222D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3F30103889EF3C337C9E8BF4 /* ArchiveManifest.swift */,
+				86A77DADCAE24BB8049D4CB3 /* Attachment.swift */,
+				4E0B692BC5F2567C6326B828 /* Chat.swift */,
+				CEEF1850DEA6E7197739F0F1 /* Message.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		89EC8D3192783296DDB092A1 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B6CCC8E8F50C965564FB672C /* AppState.swift */,
+				6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		DD5A187EB24D58CEAB3E488D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7B250064158475CE1BF99180 /* iMessageArchiver.app */,
+				A67D98C9EBDB22C1D578A26E /* iMessageArchiverTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F46B2085BF79DC02817EDE93 = {
+			isa = PBXGroup;
+			children = (
+				227F335FB281C5A400765A6F /* Sources */,
+				47D25FC7D7E099F6D4AD1321 /* Tests */,
+				DD5A187EB24D58CEAB3E488D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0669B9307CEA9DAFBF72DF13 /* iMessageArchiver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A1234C46920A5C25649D880 /* Build configuration list for PBXNativeTarget "iMessageArchiver" */;
+			buildPhases = (
+				B48D0A411BA4BE804893294C /* Sources */,
+				407505FF3FE4CD709A76717A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iMessageArchiver;
+			packageProductDependencies = (
+				EB4D02CC37A2172500E72CFE /* GRDB */,
+			);
+			productName = iMessageArchiver;
+			productReference = 7B250064158475CE1BF99180 /* iMessageArchiver.app */;
+			productType = "com.apple.product-type.application";
+		};
+		26B5996CE55736F23C0C4E8C /* iMessageArchiverTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7DE6B8D95B18A486003D1F8 /* Build configuration list for PBXNativeTarget "iMessageArchiverTests" */;
+			buildPhases = (
+				2C60502405C725F32F653AEE /* Sources */,
+				5EBBF53C46CC9B1396FEBF96 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2A8049F6A479D33DE4343668 /* PBXTargetDependency */,
+			);
+			name = iMessageArchiverTests;
+			packageProductDependencies = (
+				36AD865687D5E22802D18618 /* GRDB */,
+			);
+			productName = iMessageArchiverTests;
+			productReference = A67D98C9EBDB22C1D578A26E /* iMessageArchiverTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3937EAD14CCBCEADAE44A14A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					0669B9307CEA9DAFBF72DF13 = {
+						DevelopmentTeam = 1042783337;
+						ProvisioningStyle = Automatic;
+					};
+					26B5996CE55736F23C0C4E8C = {
+						DevelopmentTeam = 1042783337;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 234FD80CDC7D96F65F85678D /* Build configuration list for PBXProject "iMessageArchiver" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F46B2085BF79DC02817EDE93;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5F23FFCA03BF402398D19874 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DD5A187EB24D58CEAB3E488D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0669B9307CEA9DAFBF72DF13 /* iMessageArchiver */,
+				26B5996CE55736F23C0C4E8C /* iMessageArchiverTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2C60502405C725F32F653AEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D44634E991BA7CA64F7389CD /* ArchiveReaderTests.swift in Sources */,
+				885E56615BA4FD488B234659 /* TarReaderTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B48D0A411BA4BE804893294C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				76947C3AFC132C0E21510144 /* AppState.swift in Sources */,
+				100BA1372FA0D17C5E5179CF /* ArchiveInfoView.swift in Sources */,
+				645D1C7EFD819443E6671EF3 /* ArchiveManifest.swift in Sources */,
+				752C5B4E20BC567363C60337 /* ArchiveReader.swift in Sources */,
+				6556E107D86EF425B9E9D4C7 /* Attachment.swift in Sources */,
+				EA5E76539767ED8FC072523D /* AttachmentCache.swift in Sources */,
+				0656A46E6B88DD0E5B49EB6B /* AttachmentGridView.swift in Sources */,
+				5A50E39468E28C15A76C3D9E /* Chat.swift in Sources */,
+				10DCD9EB0D9705C95CD5184A /* ChatListView.swift in Sources */,
+				BA365D5FF3E81447FBF8CE7E /* ChatRowView.swift in Sources */,
+				BC7C8CE44ABE4B31C2A2AA35 /* Message.swift in Sources */,
+				62FB7350FC719A575B87F795 /* MessageBubbleView.swift in Sources */,
+				0000C49B1E7A218AA0D0B4F7 /* NoArchiveView.swift in Sources */,
+				C14D36C255EDA7CE2D57A102 /* ReactionsView.swift in Sources */,
+				07ACE7776D47533286F3DA51 /* RootView.swift in Sources */,
+				3B33A3DDAAD7898774A52432 /* SearchView.swift in Sources */,
+				5DC84988549ADF2DDF0135F0 /* TarReader.swift in Sources */,
+				A50A9B60BFAFD3D4A2878D1B /* ThreadView.swift in Sources */,
+				8AEEE5D502FEC225A3DD8287 /* iCloudCoordinator.swift in Sources */,
+				42F4D24E594A03BCD3260173 /* iMessageArchiverApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2A8049F6A479D33DE4343668 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0669B9307CEA9DAFBF72DF13 /* iMessageArchiver */;
+			targetProxy = 21C3A7ACF8D2E4192AD842D7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		09D57EF9C8C2CE0D2AB8FB9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 1042783337;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.4.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		1CB7EA0252C187B6EBE6C2A5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = iMessageArchiver.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.slw.iMessageArchiver;
+				PRODUCT_NAME = iMessageArchiver;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		24417D66A30550824687AA0C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 1042783337;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.slw.iMessageArchiverTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iMessageArchiver.app/iMessageArchiver";
+			};
+			name = Release;
+		};
+		63C663739F928BFA99631645 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = iMessageArchiver.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.slw.iMessageArchiver;
+				PRODUCT_NAME = iMessageArchiver;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B8F1BCDA0C819345F13BA724 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 1042783337;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.slw.iMessageArchiverTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iMessageArchiver.app/iMessageArchiver";
+			};
+			name = Debug;
+		};
+		D90FE118F2EDDA26893B9701 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 1042783337;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.4.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		234FD80CDC7D96F65F85678D /* Build configuration list for PBXProject "iMessageArchiver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D90FE118F2EDDA26893B9701 /* Debug */,
+				09D57EF9C8C2CE0D2AB8FB9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4A1234C46920A5C25649D880 /* Build configuration list for PBXNativeTarget "iMessageArchiver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				63C663739F928BFA99631645 /* Debug */,
+				1CB7EA0252C187B6EBE6C2A5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B7DE6B8D95B18A486003D1F8 /* Build configuration list for PBXNativeTarget "iMessageArchiverTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8F1BCDA0C819345F13BA724 /* Debug */,
+				24417D66A30550824687AA0C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5F23FFCA03BF402398D19874 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		36AD865687D5E22802D18618 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5F23FFCA03BF402398D19874 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+		EB4D02CC37A2172500E72CFE /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5F23FFCA03BF402398D19874 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 3937EAD14CCBCEADAE44A14A /* Project object */;
+}

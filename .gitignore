@@ -31,3 +31,9 @@ tests/fixtures/real/
 # Project-local Claude overrides (personal, not team settings)
 .claude/settings.local.json
 src/imessage_archiver.egg-info/
+
+# iOS Xcode
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/*.xcworkspace/xcuserdata/
+ios/DerivedData/

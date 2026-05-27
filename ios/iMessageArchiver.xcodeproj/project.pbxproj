@@ -228,11 +228,11 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					0669B9307CEA9DAFBF72DF13 = {
-						DevelopmentTeam = 1042783337;
+						DevelopmentTeam = 7V698GFQCM;
 						ProvisioningStyle = Automatic;
 					};
 					26B5996CE55736F23C0C4E8C = {
-						DevelopmentTeam = 1042783337;
+						DevelopmentTeam = 7V698GFQCM;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -345,7 +345,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 1042783337;
+				DEVELOPMENT_TEAM = 7V698GFQCM;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -392,7 +392,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 1042783337;
+				DEVELOPMENT_TEAM = 7V698GFQCM;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -429,7 +429,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 1042783337;
+				DEVELOPMENT_TEAM = 7V698GFQCM;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -479,7 +479,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 1042783337;
+				DEVELOPMENT_TEAM = 7V698GFQCM;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

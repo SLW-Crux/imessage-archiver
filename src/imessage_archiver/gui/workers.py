@@ -1,4 +1,8 @@
-"""Background worker threads for long-running operations."""
+"""Background worker threads for long-running operations.
+
+All workers are QThread subclasses that signal results back to the GUI
+thread via Qt signals. None of them touch GUI widgets directly.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +14,30 @@ from imessage_archiver.core.archive import ArchiveWriter, RunStats
 from imessage_archiver.core.lock import ArchiveLock, LockError
 from imessage_archiver.db.reader import ChatRow, Reader
 from imessage_archiver.db.snapshot import snapshot
+
+
+class SnapshotWorker(QThread):
+    """Take a chat.db snapshot on a background thread.
+
+    The GUI calls this once on startup so the rest of the session reads
+    from a stable copy rather than the live file (which Messages.app may
+    be actively writing to — opening with mode=ro&immutable=1 against the
+    live file can return SQLITE_CORRUPT under a WAL checkpoint).
+    """
+
+    finished = Signal(object, str)  # (snapshot_path: Path, sha256: str)
+    error = Signal(str)
+
+    def __init__(self, source_db: Path, parent=None) -> None:
+        super().__init__(parent)
+        self._source_db = source_db
+
+    def run(self) -> None:
+        try:
+            snap_path, sha = snapshot(source=self._source_db)
+            self.finished.emit(snap_path, sha)
+        except Exception as e:
+            self.error.emit(f"Snapshot failed: {e}")
 
 
 class ArchiveWorker(QThread):
@@ -64,7 +92,11 @@ class ArchiveWorker(QThread):
 
 
 class LoadChatsWorker(QThread):
-    """Loads the chat list from a Reader in the background."""
+    """Loads the chat list from a snapshotted Reader in the background.
+
+    ``db_path`` must be a snapshot path, not the live chat.db, because the
+    Reader opens with ``immutable=1`` which is unsafe against a live WAL.
+    """
 
     finished = Signal(list)  # list[ChatRow]
     error = Signal(str)
@@ -83,7 +115,11 @@ class LoadChatsWorker(QThread):
 
 
 class LoadMessagesWorker(QThread):
-    """Loads messages for a single chat in the background."""
+    """Loads messages for a single chat in the background.
+
+    The chat_guid is echoed in the finished signal so the GUI can drop
+    stale results when the user rapidly switches between chats.
+    """
 
     finished = Signal(str, list)  # (chat_guid, list[MessageRow])
     error = Signal(str)

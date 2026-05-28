@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
@@ -21,7 +22,11 @@ from imessage_archiver.gui.archive_panel import ArchivePanel
 from imessage_archiver.gui.message_view import MessageView
 from imessage_archiver.gui.models import ChatListModel
 from imessage_archiver.gui.setup_screen import SetupScreen, _has_full_disk_access
-from imessage_archiver.gui.workers import LoadChatsWorker, LoadMessagesWorker
+from imessage_archiver.gui.workers import (
+    LoadChatsWorker,
+    LoadMessagesWorker,
+    SnapshotWorker,
+)
 
 _CHAT_DB = Path.home() / "Library" / "Messages" / "chat.db"
 _WINDOW_TITLE = "iMessage Archiver"
@@ -37,7 +42,14 @@ class MainWindow(QMainWindow):
         self.resize(1200, 750)
 
         self._chat_db: Path = _CHAT_DB
+        # Snapshot of chat.db taken once at startup. The Reader uses
+        # immutable=1 which is unsafe against a live WAL — Messages.app
+        # may be checkpointing — so we always read from the snapshot.
+        self._snapshot_path: Path | None = None
         self._workers: list = []
+        # Last chat_guid the user clicked. Used to drop stale
+        # LoadMessagesWorker callbacks when the user clicks rapidly.
+        self._current_chat_guid: str | None = None
 
         self._stack = QStackedWidget()
         self.setCentralWidget(self._stack)
@@ -46,6 +58,27 @@ class MainWindow(QMainWindow):
             self._show_main()
         else:
             self._show_setup()
+
+    # ------------------------------------------------------------------
+    # Window lifecycle
+    # ------------------------------------------------------------------
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
+        """Tear down all running worker threads before the window dies.
+
+        Without this, in-flight QThreads would emit signals after their
+        targets had been deleted, and shutdown would block until they
+        finished naturally.
+        """
+        for worker in list(self._workers):
+            try:
+                worker.quit()
+                worker.wait(3000)
+            except RuntimeError:
+                # Worker already dead — Qt raises on already-deleted objects.
+                pass
+        self._workers.clear()
+        super().closeEvent(event)
 
     # ------------------------------------------------------------------
     # Setup screen
@@ -85,7 +118,7 @@ class MainWindow(QMainWindow):
         self._chat_list.selectionModel().currentChanged.connect(self._on_chat_selected)
         left_layout.addWidget(self._chat_list, 1)
 
-        self._chat_status = QLabel("Loading…")
+        self._chat_status = QLabel("Snapshotting chat.db…")
         self._chat_status.setAlignment(Qt.AlignCenter)
         left_layout.addWidget(self._chat_status)
 
@@ -103,18 +136,32 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(splitter)
         self._stack.setCurrentWidget(splitter)
 
+        # Take the snapshot first. _on_snapshot_ready will kick off the
+        # chat-list load against the snapshot path.
+        self._take_snapshot()
+
+    # ------------------------------------------------------------------
+    # Snapshot → chat list load
+    # ------------------------------------------------------------------
+
+    def _take_snapshot(self) -> None:
+        worker = SnapshotWorker(source_db=self._chat_db)
+        worker.finished.connect(self._on_snapshot_ready)
+        worker.error.connect(self._on_load_error)
+        self._track(worker)
+        worker.start()
+
+    def _on_snapshot_ready(self, snap_path: Path, _sha: str) -> None:
+        self._snapshot_path = snap_path
+        self._chat_status.setText("Loading conversations…")
         self._load_chats()
 
-    # ------------------------------------------------------------------
-    # Chat loading
-    # ------------------------------------------------------------------
-
     def _load_chats(self) -> None:
-        worker = LoadChatsWorker(db_path=self._chat_db)
+        assert self._snapshot_path is not None, "snapshot must precede chat load"
+        worker = LoadChatsWorker(db_path=self._snapshot_path)
         worker.finished.connect(self._on_chats_loaded)
         worker.error.connect(self._on_load_error)
-        self._workers.append(worker)
-        worker.finished.connect(lambda _: self._workers.remove(worker))
+        self._track(worker)
         worker.start()
 
     def _on_chats_loaded(self, chats: list[ChatRow]) -> None:
@@ -126,26 +173,52 @@ class MainWindow(QMainWindow):
         self._chat_status.setText(f"Error: {message}")
 
     # ------------------------------------------------------------------
-    # Chat selection → message loading
+    # Chat selection → message loading (with last-write-wins protection)
     # ------------------------------------------------------------------
 
     def _on_chat_selected(self, index, _prev) -> None:
         chat = self._chat_model.chat_at(index.row())
         if chat is None:
             return
+        self._current_chat_guid = chat.chat_guid
         self._message_view.clear()
         self._load_messages(chat.chat_guid)
 
     def _load_messages(self, chat_guid: str) -> None:
-        worker = LoadMessagesWorker(db_path=self._chat_db, chat_guid=chat_guid)
+        if self._snapshot_path is None:
+            return
+        worker = LoadMessagesWorker(db_path=self._snapshot_path, chat_guid=chat_guid)
         worker.finished.connect(self._on_messages_loaded)
         worker.error.connect(self._on_load_error)
-        self._workers.append(worker)
-        worker.finished.connect(lambda *_: self._workers.remove(worker))
+        self._track(worker)
         worker.start()
 
     def _on_messages_loaded(self, chat_guid: str, msgs: list[MessageRow]) -> None:
+        # Drop stale results: only render messages for the chat the user
+        # is currently viewing. The slower worker for a previously-selected
+        # chat will silently noop.
+        if chat_guid != self._current_chat_guid:
+            return
         self._message_view.load_messages(msgs)
+
+    # ------------------------------------------------------------------
+    # Worker bookkeeping
+    # ------------------------------------------------------------------
+
+    def _track(self, worker) -> None:
+        """Add *worker* to the cleanup list with a self-removing callback.
+
+        Uses weakref-like indirection (capture by name only) to avoid the
+        closure holding a strong reference that survives the QThread.
+        """
+        self._workers.append(worker)
+        worker_id = id(worker)
+
+        def _remove(*_args, _id=worker_id) -> None:
+            self._workers[:] = [w for w in self._workers if id(w) != _id]
+
+        worker.finished.connect(_remove)
+        worker.error.connect(_remove)
 
     # ------------------------------------------------------------------
     # Search

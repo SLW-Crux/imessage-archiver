@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import tarfile
 from pathlib import Path
 
 import pytest
@@ -81,30 +80,24 @@ class TestDatabaseSchema:
 
     def test_all_messages_have_valid_chat_guids(self, tiny_bundle: Path) -> None:
         conn = sqlite3.connect(str(tiny_bundle / "archive.sqlite"))
-        orphans = conn.execute(
-            """SELECT COUNT(*) FROM messages m
+        orphans = conn.execute("""SELECT COUNT(*) FROM messages m
                LEFT JOIN chats c ON m.chat_guid = c.chat_guid
-               WHERE c.chat_guid IS NULL"""
-        ).fetchone()[0]
+               WHERE c.chat_guid IS NULL""").fetchone()[0]
         conn.close()
         assert orphans == 0
 
     def test_all_attachments_have_valid_message_guids(self, tiny_bundle: Path) -> None:
         conn = sqlite3.connect(str(tiny_bundle / "archive.sqlite"))
-        orphans = conn.execute(
-            """SELECT COUNT(*) FROM attachments a
+        orphans = conn.execute("""SELECT COUNT(*) FROM attachments a
                LEFT JOIN messages m ON a.message_guid = m.message_guid
-               WHERE m.message_guid IS NULL"""
-        ).fetchone()[0]
+               WHERE m.message_guid IS NULL""").fetchone()[0]
         conn.close()
         assert orphans == 0
 
     def test_fts_index_populated(self, tiny_bundle: Path) -> None:
         conn = sqlite3.connect(str(tiny_bundle / "archive.sqlite"))
         fts_count = conn.execute("SELECT COUNT(*) FROM messages_fts").fetchone()[0]
-        msg_count = conn.execute(
-            "SELECT COUNT(*) FROM messages WHERE text IS NOT NULL"
-        ).fetchone()[0]
+        msg_count = conn.execute("SELECT COUNT(*) FROM messages WHERE text IS NOT NULL").fetchone()[0]
         conn.close()
         assert fts_count == msg_count
 
@@ -126,10 +119,8 @@ class TestDatabaseSchema:
 class TestAttachmentStorage:
     def test_local_present_attachments_have_offsets(self, tiny_bundle: Path) -> None:
         conn = sqlite3.connect(str(tiny_bundle / "archive.sqlite"))
-        rows = conn.execute(
-            """SELECT attachment_guid, tar_offset, tar_length, sha256
-               FROM attachments WHERE state='LOCAL_PRESENT'"""
-        ).fetchall()
+        rows = conn.execute("""SELECT attachment_guid, tar_offset, tar_length, sha256
+               FROM attachments WHERE state='LOCAL_PRESENT'""").fetchall()
         conn.close()
         assert len(rows) >= 1
         for guid, offset, length, sha in rows:
@@ -139,9 +130,7 @@ class TestAttachmentStorage:
 
     def test_missing_attachments_have_null_offsets(self, edge_bundle: Path) -> None:
         conn = sqlite3.connect(str(edge_bundle / "archive.sqlite"))
-        rows = conn.execute(
-            "SELECT tar_offset, tar_length FROM attachments WHERE state='MISSING'"
-        ).fetchall()
+        rows = conn.execute("SELECT tar_offset, tar_length FROM attachments WHERE state='MISSING'").fetchall()
         conn.close()
         for offset, length in rows:
             assert offset is None
@@ -174,7 +163,6 @@ class TestIdempotency:
 
         conn = sqlite3.connect(str(bundle / "archive.sqlite"))
         msg_count = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
-        att_count = conn.execute("SELECT COUNT(*) FROM attachments").fetchone()[0]
         runs = conn.execute("SELECT COUNT(*) FROM archive_runs").fetchone()[0]
         conn.close()
 
@@ -202,25 +190,21 @@ class TestIdempotency:
 class TestEdgeCases:
     def test_attributed_body_message_has_text(self, edge_bundle: Path) -> None:
         conn = sqlite3.connect(str(edge_bundle / "archive.sqlite"))
-        row = conn.execute(
-            "SELECT text FROM messages WHERE text='via attributedBody'"
-        ).fetchone()
+        row = conn.execute("SELECT text FROM messages WHERE text='via attributedBody'").fetchone()
         conn.close()
         assert row is not None
 
     def test_tapback_messages_stored(self, edge_bundle: Path) -> None:
         conn = sqlite3.connect(str(edge_bundle / "archive.sqlite"))
-        tapbacks = conn.execute(
-            "SELECT COUNT(*) FROM messages WHERE associated_message_type > 0"
-        ).fetchone()[0]
+        tapbacks = conn.execute("SELECT COUNT(*) FROM messages WHERE associated_message_type > 0").fetchone()[
+            0
+        ]
         conn.close()
         assert tapbacks >= 2
 
     def test_reactions_json_denormalised(self, edge_bundle: Path) -> None:
         conn = sqlite3.connect(str(edge_bundle / "archive.sqlite"))
-        rows = conn.execute(
-            "SELECT reactions_json FROM messages WHERE reactions_json IS NOT NULL"
-        ).fetchall()
+        rows = conn.execute("SELECT reactions_json FROM messages WHERE reactions_json IS NOT NULL").fetchall()
         conn.close()
         assert len(rows) >= 1
         for (rjson,) in rows:

@@ -3,21 +3,17 @@
 from __future__ import annotations
 
 import datetime
-from typing import List
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPalette
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from imessage_archiver.db.reader import MessageRow
-
 
 _MAX_MESSAGES = 50
 
@@ -57,11 +53,11 @@ class MessageBubble(QFrame):
         # Reactions
         if msg.reactions_json:
             import json
+
             try:
                 reactions = json.loads(msg.reactions_json)
                 rtext = "  ".join(
-                    f"{_reaction_emoji(r.get('type', ''))} {r.get('from', '')}"
-                    for r in reactions
+                    f"{_reaction_emoji(r.get('type', ''))} {r.get('from', '')}" for r in reactions
                 )
                 rlabel = QLabel(f"<small>{rtext}</small>")
                 rlabel.setTextFormat(Qt.RichText)
@@ -111,9 +107,7 @@ class MessageView(QWidget):
             self._vbox.addWidget(bubble)
 
         # Scroll to bottom
-        self._scroll.verticalScrollBar().setValue(
-            self._scroll.verticalScrollBar().maximum()
-        )
+        self._scroll.verticalScrollBar().setValue(self._scroll.verticalScrollBar().maximum())
 
     def clear(self) -> None:
         while self._vbox.count():

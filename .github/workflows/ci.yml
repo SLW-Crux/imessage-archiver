@@ -19,8 +19,8 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Install dev dependencies
-        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+      - name: Install dev + gui dependencies
+        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev,gui]"
       - name: Ruff lint
         run: source .venv/bin/activate && ruff check src/ tests/
       - name: Black format check
@@ -49,11 +49,13 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Install dev dependencies
-        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+      - name: Install dev + gui dependencies
+        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev,gui]"
       - name: Generate fixtures
         run: source .venv/bin/activate && python tests/fixtures/generate.py
       - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           source .venv/bin/activate
           pytest tests/unit/ tests/integration/ \
@@ -76,8 +78,8 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Install dev dependencies
-        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+      - name: Install dev + gui dependencies
+        run: uv venv && source .venv/bin/activate && uv pip install -e ".[dev,gui]"
       - name: Generate fixtures
         run: source .venv/bin/activate && python tests/fixtures/generate.py
       - name: Run corruption tests

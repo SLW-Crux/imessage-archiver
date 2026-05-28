@@ -9,13 +9,9 @@ Run directly: python tests/fixtures/generate.py
 
 from __future__ import annotations
 
-import hashlib
-import json
-import os
 import plistlib
 import random
 import sqlite3
-import struct
 import time
 from pathlib import Path
 
@@ -294,9 +290,9 @@ def insert_handle(conn: sqlite3.Connection, handle_id: str, service: str) -> int
     )
     if cur.lastrowid:
         return cur.lastrowid
-    return conn.execute(
-        "SELECT ROWID FROM handle WHERE id=? AND service=?", (handle_id, service)
-    ).fetchone()[0]
+    return conn.execute("SELECT ROWID FROM handle WHERE id=? AND service=?", (handle_id, service)).fetchone()[
+        0
+    ]
 
 
 def insert_chat(
@@ -348,10 +344,19 @@ def insert_message(
             attributedBody
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            guid, text, handle_id, date_ns, is_from_me, service,
-            associated_message_guid, associated_message_type,
-            reply_to_guid, thread_originator_guid,
-            cache_has_attachments, date_edited, date_retracted,
+            guid,
+            text,
+            handle_id,
+            date_ns,
+            is_from_me,
+            service,
+            associated_message_guid,
+            associated_message_type,
+            reply_to_guid,
+            thread_originator_guid,
+            cache_has_attachments,
+            date_edited,
+            date_retracted,
             attributed_body,
         ),
     )
@@ -376,17 +381,77 @@ def insert_attachment(
 
 def make_tiny_png() -> bytes:
     """Return a minimal valid 1×1 transparent PNG."""
-    return bytes([
-        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-        0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-        0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-        0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
-        0x54, 0x78, 0x9C, 0x62, 0x00, 0x01, 0x00, 0x00,
-        0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-        0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
-        0x42, 0x60, 0x82,
-    ])
+    return bytes(
+        [
+            0x89,
+            0x50,
+            0x4E,
+            0x47,
+            0x0D,
+            0x0A,
+            0x1A,
+            0x0A,
+            0x00,
+            0x00,
+            0x00,
+            0x0D,
+            0x49,
+            0x48,
+            0x44,
+            0x52,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+            0x08,
+            0x06,
+            0x00,
+            0x00,
+            0x00,
+            0x1F,
+            0x15,
+            0xC4,
+            0x89,
+            0x00,
+            0x00,
+            0x00,
+            0x0A,
+            0x49,
+            0x44,
+            0x41,
+            0x54,
+            0x78,
+            0x9C,
+            0x62,
+            0x00,
+            0x01,
+            0x00,
+            0x00,
+            0x05,
+            0x00,
+            0x01,
+            0x0D,
+            0x0A,
+            0x2D,
+            0xB4,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x49,
+            0x45,
+            0x4E,
+            0x44,
+            0xAE,
+            0x42,
+            0x60,
+            0x82,
+        ]
+    )
 
 
 def write_attachment_file(guid: str, ext: str, content: bytes) -> str:
@@ -419,6 +484,7 @@ def make_attributed_body(text: str) -> bytes:
 # Fixture builders
 # ---------------------------------------------------------------------------
 
+
 def build_tiny(path: Path) -> None:
     """tiny.db — 2 chats, 10 messages, 3 attachments. Smoke tests."""
     conn = sqlite3.connect(str(path))
@@ -440,8 +506,7 @@ def build_tiny(path: Path) -> None:
         chat_rowid = c1 if i < 5 else c2
         is_me = i % 2
         handle = 0 if is_me else (h1 if i < 5 else h2)
-        rowid = insert_message(conn, g, SAMPLE_TEXTS[i % len(SAMPLE_TEXTS)],
-                               handle, t, is_me, "iMessage")
+        rowid = insert_message(conn, g, SAMPLE_TEXTS[i % len(SAMPLE_TEXTS)], handle, t, is_me, "iMessage")
         msg_rowids.append(rowid)
         conn.execute(
             "INSERT INTO chat_message_join(chat_id, message_id, message_date) VALUES (?, ?, ?)",
@@ -500,8 +565,9 @@ def build_medium(path: Path) -> None:
         handle = 0 if is_me else handle_rowids[msg_i % len(handle_rowids)]
         text = rng.choice(SAMPLE_TEXTS)
         has_att = att_count < 200 and rng.random() < 0.04
-        rowid = insert_message(conn, g, text, handle, int(t), int(is_me),
-                               "iMessage", cache_has_attachments=int(has_att))
+        rowid = insert_message(
+            conn, g, text, handle, int(t), int(is_me), "iMessage", cache_has_attachments=int(has_att)
+        )
         conn.execute(
             "INSERT INTO chat_message_join(chat_id, message_id, message_date) VALUES (?, ?, ?)",
             (chat_rowid, rowid, int(t)),
@@ -555,8 +621,9 @@ def build_large(path: Path) -> None:
         handle = 0 if is_me else handle_rowids[msg_i % len(handle_rowids)]
         text = rng.choice(SAMPLE_TEXTS)
         has_att = att_count < 1_000 and rng.random() < 0.02
-        rowid = insert_message(conn, g, text, handle, int(t), int(is_me),
-                               "iMessage", cache_has_attachments=int(has_att))
+        rowid = insert_message(
+            conn, g, text, handle, int(t), int(is_me), "iMessage", cache_has_attachments=int(has_att)
+        )
         conn.execute(
             "INSERT INTO chat_message_join(chat_id, message_id, message_date) VALUES (?, ?, ?)",
             (chat_rowid, rowid, int(t)),
@@ -589,11 +656,11 @@ def build_edge(path: Path) -> None:
     # 1-on-1 chat
     c1 = insert_chat(conn, make_guid("chat", 1), "+14155550101", "iMessage", None, None, [h1])
     # Group chat
-    c_group = insert_chat(conn, make_guid("chat", 2), "chat-group-1", "iMessage",
-                          "Test Group", "room-1", [h1, h2, h3])
+    c_group = insert_chat(
+        conn, make_guid("chat", 2), "chat-group-1", "iMessage", "Test Group", "room-1", [h1, h2, h3]
+    )
     # Email handle chat
-    c_email = insert_chat(conn, make_guid("chat", 3), "alice@example.com", "iMessage",
-                          None, None, [h_email])
+    c_email = insert_chat(conn, make_guid("chat", 3), "alice@example.com", "iMessage", None, None, [h_email])
 
     base = time.time() - 7 * 86400
     msg_n = [0]
@@ -605,8 +672,9 @@ def build_edge(path: Path) -> None:
     def t(offset_secs: float) -> int:
         return unix_to_apple_ns(base + offset_secs)
 
-    def add(chat_rowid: int, text: str | None, handle: int, offset: float,
-            is_me: int = 0, **kwargs: object) -> tuple[int, str]:
+    def add(
+        chat_rowid: int, text: str | None, handle: int, offset: float, is_me: int = 0, **kwargs: object
+    ) -> tuple[int, str]:
         g = next_msg_guid()
         rowid = insert_message(conn, g, text, handle, t(offset), is_me, "iMessage", **kwargs)
         conn.execute(
@@ -632,21 +700,25 @@ def build_edge(path: Path) -> None:
     add(c1, "Message from me", 0, 20, is_me=1)
 
     # --- Tapbacks on g1 ---
-    tapback_rowid, tg = add(c1, None, h1, 30,
-                            associated_message_guid=g1,
-                            associated_message_type=TAPBACK_TYPES["love"])
-    add(c1, None, 0, 35, is_me=1,
-        associated_message_guid=g1, associated_message_type=TAPBACK_TYPES["like"])
+    tapback_rowid, tg = add(
+        c1, None, h1, 30, associated_message_guid=g1, associated_message_type=TAPBACK_TYPES["love"]
+    )
+    add(c1, None, 0, 35, is_me=1, associated_message_guid=g1, associated_message_type=TAPBACK_TYPES["like"])
     # Remove tapback
-    add(c1, None, h1, 40,
-        associated_message_guid=g1, associated_message_type=TAPBACK_TYPES["love"] + 1000)
+    add(c1, None, h1, 40, associated_message_guid=g1, associated_message_type=TAPBACK_TYPES["love"] + 1000)
 
     # --- Reply thread ---
     _, g_thread_orig = add(c1, "Thread starter", h1, 50)
-    add(c1, "Reply to thread", 0, 55, is_me=1,
-        reply_to_guid=g_thread_orig, thread_originator_guid=g_thread_orig)
-    add(c1, "Another reply", h1, 60,
-        reply_to_guid=g_thread_orig, thread_originator_guid=g_thread_orig)
+    add(
+        c1,
+        "Reply to thread",
+        0,
+        55,
+        is_me=1,
+        reply_to_guid=g_thread_orig,
+        thread_originator_guid=g_thread_orig,
+    )
+    add(c1, "Another reply", h1, 60, reply_to_guid=g_thread_orig, thread_originator_guid=g_thread_orig)
 
     # --- Emoji corpus ---
     for i, emoji_text in enumerate(EMOJI_CORPUS):
@@ -660,12 +732,10 @@ def build_edge(path: Path) -> None:
     add(c1, "A" * 10001, h1, 300)
 
     # --- Edited message (Sonoma+) ---
-    add(c1, "This was edited", h1, 400,
-        date_edited=unix_to_apple_ns(base + 401))
+    add(c1, "This was edited", h1, 400, date_edited=unix_to_apple_ns(base + 401))
 
     # --- Retracted message ---
-    add(c1, "This was unsent", h1, 410,
-        date_retracted=unix_to_apple_ns(base + 411))
+    add(c1, "This was unsent", h1, 410, date_retracted=unix_to_apple_ns(base + 411))
 
     # --- Same contact under phone and email ---
     add(c_email, "Via email", h_email, 500)
@@ -689,9 +759,14 @@ def build_edge(path: Path) -> None:
     # --- Missing attachment (file won't exist on disk) ---
     rowid_missing, _ = add(c1, None, h1, 750, cache_has_attachments=1)
     ag_missing = make_guid("att", 20)
-    att_missing = insert_attachment(conn, ag_missing,
-                                    "~/Library/Messages/Attachments/xx/nonexistent.jpg",
-                                    "image/jpeg", "public.jpeg", 12345)
+    att_missing = insert_attachment(
+        conn,
+        ag_missing,
+        "~/Library/Messages/Attachments/xx/nonexistent.jpg",
+        "image/jpeg",
+        "public.jpeg",
+        12345,
+    )
     conn.execute("INSERT INTO message_attachment_join VALUES (?, ?)", (rowid_missing, att_missing))
 
     # --- Zero-byte attachment ---
@@ -707,17 +782,14 @@ def build_edge(path: Path) -> None:
     uni_data = make_tiny_png()
     fpath_uni = write_attachment_file(ag_uni, ".png", uni_data)
     fpath_uni_labeled = fpath_uni.replace(ag_uni, f"{ag_uni}-café_photo")
-    att_uni = insert_attachment(conn, ag_uni, fpath_uni_labeled, "image/png", "public.png",
-                                len(uni_data))
+    att_uni = insert_attachment(conn, ag_uni, fpath_uni_labeled, "image/png", "public.png", len(uni_data))
     conn.execute("INSERT INTO message_attachment_join VALUES (?, ?)", (rowid_unicode, att_uni))
 
     conn.commit()
     conn.close()
 
 
-def build_schema_variant(
-    path: Path, variant: str, extra_messages: int = 200
-) -> None:
+def build_schema_variant(path: Path, variant: str, extra_messages: int = 200) -> None:
     """Build a schema-variant fixture (ventura/sonoma/sequoia)."""
     conn = sqlite3.connect(str(path))
     create_schema(conn)
@@ -732,8 +804,15 @@ def build_schema_variant(
         t = unix_to_apple_ns(base + i * 120 + rng.uniform(-60, 60))
         is_me = i % 3 == 0
         handle = 0 if is_me else h1
-        rowid = insert_message(conn, g, rng.choice(SAMPLE_TEXTS), handle, int(t), int(is_me),
-                               "iMessage" if variant != "sequoia" else "RCS")
+        rowid = insert_message(
+            conn,
+            g,
+            rng.choice(SAMPLE_TEXTS),
+            handle,
+            int(t),
+            int(is_me),
+            "iMessage" if variant != "sequoia" else "RCS",
+        )
         conn.execute(
             "INSERT INTO chat_message_join(chat_id, message_id, message_date) VALUES (?, ?, ?)",
             (c1, rowid, int(t)),

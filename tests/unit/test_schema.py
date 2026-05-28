@@ -1,10 +1,10 @@
 """Unit tests for schema constants and tapback helpers."""
 
 from imessage_archiver.db.schema import (
+    TAPBACK_TYPE_NAMES,
     is_tapback,
     tapback_base_type,
     tapback_is_remove,
-    TAPBACK_TYPE_NAMES,
 )
 
 

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
-import pytest
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 from imessage_archiver.db.reader import Reader, _resolve_attachment_path
 
@@ -112,8 +113,7 @@ class TestEdgeDb:
 
     def test_attachment_only_message_has_no_text(self) -> None:
         all_msgs = [m for _, m in self.reader.all_messages()]
-        att_only = [m for m in all_msgs if m.has_attachments and not m.text
-                    and not m.associated_message_type]
+        att_only = [m for m in all_msgs if m.has_attachments and not m.text and not m.associated_message_type]
         assert len(att_only) >= 1
 
     def test_tapback_messages_detected(self) -> None:
@@ -207,8 +207,9 @@ class TestReaderCoverageBranches:
     def test_row_to_attachment_exception_caught(self) -> None:
         """_resolve_attachment_path raising is caught silently — exercises lines 356-357."""
         with Reader(fixture("edge.db")) as r:
-            with patch("imessage_archiver.db.reader._resolve_attachment_path",
-                       side_effect=ValueError("bad path")):
+            with patch(
+                "imessage_archiver.db.reader._resolve_attachment_path", side_effect=ValueError("bad path")
+            ):
                 atts = r.all_attachments()
                 results = list(atts)
         assert len(results) >= 1

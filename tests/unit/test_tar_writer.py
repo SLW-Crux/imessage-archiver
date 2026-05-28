@@ -5,8 +5,6 @@ from __future__ import annotations
 import tarfile
 from pathlib import Path
 
-import pytest
-
 from imessage_archiver.core.tar_writer import TarWriter, _tar_entry_name
 
 

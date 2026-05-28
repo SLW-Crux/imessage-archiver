@@ -18,9 +18,9 @@ class ArchiveWorker(QThread):
     Emits progress updates and a final done/error signal.
     """
 
-    progress = Signal(str, int, int)   # (description, completed, total)
-    finished = Signal(object)          # RunStats
-    error = Signal(str)                # error message
+    progress = Signal(str, int, int)  # (description, completed, total)
+    finished = Signal(object)  # RunStats
+    error = Signal(str)  # error message
 
     _LOCK = Path.home() / ".imessage-archiver" / "archive.lock"
 
@@ -66,7 +66,7 @@ class ArchiveWorker(QThread):
 class LoadChatsWorker(QThread):
     """Loads the chat list from a Reader in the background."""
 
-    finished = Signal(list)   # list[ChatRow]
+    finished = Signal(list)  # list[ChatRow]
     error = Signal(str)
 
     def __init__(self, db_path: Path, parent=None) -> None:

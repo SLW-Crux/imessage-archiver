@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sqlite3
-import struct
 from pathlib import Path
 
 import pytest

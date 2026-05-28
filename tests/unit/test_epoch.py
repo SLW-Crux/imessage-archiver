@@ -1,7 +1,11 @@
 """Unit tests for epoch conversion."""
 
-import pytest
-from imessage_archiver.db.epoch import apple_to_unix, unix_to_apple, unix_to_apple_ns, APPLE_EPOCH_OFFSET
+from imessage_archiver.db.epoch import (
+    APPLE_EPOCH_OFFSET,
+    apple_to_unix,
+    unix_to_apple,
+    unix_to_apple_ns,
+)
 
 
 class TestAppleToUnix:
@@ -25,7 +29,7 @@ class TestAppleToUnix:
 
     def test_value_at_threshold_treated_as_nanoseconds(self) -> None:
         # 10^13 ns ÷ 10^9 = 10^4 Apple seconds (just after Apple epoch)
-        at = 10 ** 13
+        at = 10**13
         expected = at // 1_000_000_000 + APPLE_EPOCH_OFFSET
         assert apple_to_unix(at) == expected
 

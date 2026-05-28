@@ -8,12 +8,8 @@ file-data byte (header_start + 512) and *length* is the raw file size
 
 from __future__ import annotations
 
-import os
-import struct
 import tarfile
-import time
 from pathlib import Path
-
 
 _HEADER_SIZE = 512
 _BLOCK_SIZE = 512
@@ -44,7 +40,7 @@ class TarWriter:
         else:
             self._tar = tarfile.open(str(path), "w:")
         # Cache file descriptor for offset tracking
-        self._fd = self._tar.fileobj  # type: ignore[attr-defined]
+        self._fd = self._tar.fileobj
 
     # ------------------------------------------------------------------
     def append(
@@ -73,7 +69,8 @@ class TarWriter:
 
         with source_path.open("rb") as fh:
             self._tar.addfile(info, fh)
-        self._tar.fileobj.flush()  # type: ignore[union-attr]
+        if self._tar.fileobj is not None and hasattr(self._tar.fileobj, "flush"):
+            self._tar.fileobj.flush()
 
         tar_offset = header_start + _HEADER_SIZE
         return tar_offset, file_size
@@ -82,7 +79,7 @@ class TarWriter:
     def close(self) -> None:
         self._tar.close()
 
-    def __enter__(self) -> "TarWriter":
+    def __enter__(self) -> TarWriter:
         return self
 
     def __exit__(self, *_: object) -> None:

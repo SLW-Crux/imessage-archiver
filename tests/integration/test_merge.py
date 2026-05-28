@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time
 from pathlib import Path
 
 import pytest
@@ -72,7 +73,7 @@ class TestIncrementalMerge:
                 w.run(r)
         m1 = json.loads((bundle / "manifest.json").read_text())
 
-        import time; time.sleep(1)  # ensure different timestamp
+        time.sleep(1)  # ensure different timestamp
 
         with Reader(_fixture("tiny.db")) as r:
             with ArchiveWriter(bundle) as w:

@@ -11,11 +11,9 @@ and writes a single, clean, WAL-free file atomically.
 from __future__ import annotations
 
 import hashlib
-import os
 import sqlite3
 import time
 from pathlib import Path
-
 
 _WORK_ROOT = Path.home() / ".imessage-archiver" / "work"
 _SOURCE_DB = Path.home() / "Library" / "Messages" / "chat.db"

@@ -10,20 +10,21 @@ is always safe — it just won't overwrite existing rows.
 
 from __future__ import annotations
 
-import sqlite3
-import time
+from collections.abc import Callable
 from pathlib import Path
 
 from imessage_archiver.core.archive import ArchiveWriter, RunStats
-from imessage_archiver.db.reader import Reader
+from imessage_archiver.db.reader import ChatRow, Reader
 from imessage_archiver.db.snapshot import snapshot
+
+ProgressCallback = Callable[[ChatRow, RunStats], None]
 
 
 def merge(
     bundle_path: Path,
     source_db: Path | None = None,
     work_root: Path | None = None,
-    progress: "ProgressCallback | None" = None,
+    progress: ProgressCallback | None = None,
 ) -> RunStats:
     """Snapshot *source_db* and merge new messages into *bundle_path*.
 
@@ -57,8 +58,3 @@ def merge(
 
 def _default_chat_db() -> Path:
     return Path.home() / "Library" / "Messages" / "chat.db"
-
-
-from typing import Callable
-from imessage_archiver.db.reader import ChatRow
-ProgressCallback = Callable[[ChatRow, RunStats], None]

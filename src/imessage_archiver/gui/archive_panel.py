@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import datetime
 import subprocess
-import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QGroupBox,
@@ -22,7 +21,6 @@ from PySide6.QtWidgets import (
 )
 
 from imessage_archiver.core.archive import RunStats
-from imessage_archiver.db.reader import ChatRow
 from imessage_archiver.gui.workers import ArchiveWorker
 
 _DEFAULT_DEST = (
@@ -104,9 +102,7 @@ class ArchivePanel(QWidget):
         layout.addWidget(self._post_group)
 
     def _browse_dest(self) -> None:
-        path = QFileDialog.getExistingDirectory(
-            self, "Select Archive Destination", str(_DEFAULT_DEST.parent)
-        )
+        path = QFileDialog.getExistingDirectory(self, "Select Archive Destination", str(_DEFAULT_DEST.parent))
         if path:
             self._dest_edit.setText(str(Path(path) / "archive.imarchive"))
 
@@ -135,8 +131,7 @@ class ArchivePanel(QWidget):
         self._archive_btn.setEnabled(True)
         self._progress.hide()
         self._status_label.setText(
-            f"Done — {stats.messages_seen:,} messages, "
-            f"{stats.attachments_written:,} new attachments"
+            f"Done — {stats.messages_seen:,} messages, " f"{stats.attachments_written:,} new attachments"
         )
         self._post_group.show()
         self.archive_completed.emit(stats)
@@ -152,21 +147,18 @@ class ArchivePanel(QWidget):
         try:
             _add_eventkit_reminder()
             QMessageBox.information(
-                self, "Reminder Added",
-                "A yearly iMessage archive reminder has been added to your Calendar."
+                self, "Reminder Added", "A yearly iMessage archive reminder has been added to your Calendar."
             )
         except Exception as e:
             QMessageBox.warning(
-                self, "Calendar",
+                self,
+                "Calendar",
                 f"Could not add reminder automatically: {e}\n\n"
-                "Please add a yearly reminder manually to your Calendar."
+                "Please add a yearly reminder manually to your Calendar.",
             )
 
     def _open_messages_settings(self) -> None:
-        subprocess.Popen([
-            "open",
-            "x-apple.systempreferences:com.apple.Messages-Settings.extension"
-        ])
+        subprocess.Popen(["open", "x-apple.systempreferences:com.apple.Messages-Settings.extension"])
 
 
 _REMINDER_TITLE = "Archive iMessages (yearly)"
@@ -187,14 +179,17 @@ def _next_year_same_day(now: datetime.datetime) -> datetime.datetime:
     """
     target_year = now.year + 1
     try:
-        return now.replace(
-            year=target_year, hour=_REMINDER_HOUR, minute=0, second=0, microsecond=0
-        )
+        return now.replace(year=target_year, hour=_REMINDER_HOUR, minute=0, second=0, microsecond=0)
     except ValueError:
         # Feb 29 in a leap year → snap to Feb 28 next year
         return now.replace(
-            year=target_year, month=2, day=28,
-            hour=_REMINDER_HOUR, minute=0, second=0, microsecond=0,
+            year=target_year,
+            month=2,
+            day=28,
+            hour=_REMINDER_HOUR,
+            minute=0,
+            second=0,
+            microsecond=0,
         )
 
 
@@ -214,9 +209,7 @@ def _add_eventkit_reminder() -> None:
         granted[0] = g
         error_box[0] = e
 
-    store.requestAccessToEntityType_completion_(
-        EventKit.EKEntityTypeEvent, handler
-    )
+    store.requestAccessToEntityType_completion_(EventKit.EKEntityTypeEvent, handler)
 
     if not granted[0]:
         raise PermissionError("Calendar access not granted")
@@ -236,8 +229,6 @@ def _add_eventkit_reminder() -> None:
     )
     event.setRecurrenceRules_([rule])
 
-    success, err = store.saveEvent_span_commit_error_(
-        event, EventKit.EKSpanThisEvent, True, None
-    )
+    success, err = store.saveEvent_span_commit_error_(event, EventKit.EKSpanThisEvent, True, None)
     if not success:
         raise RuntimeError(f"Could not save event: {err}")

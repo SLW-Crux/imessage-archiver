@@ -2,7 +2,6 @@
 
 import sys
 from unittest.mock import MagicMock, patch
-import pytest
 
 from imessage_archiver.db import contacts
 
@@ -46,9 +45,7 @@ class TestResolveMocked:
         contact.givenName.return_value = given
         contact.familyName.return_value = family
         store = MagicMock()
-        store.unifiedContactsMatchingPredicate_keysToFetch_error_.return_value = (
-            [contact], None
-        )
+        store.unifiedContactsMatchingPredicate_keysToFetch_error_.return_value = ([contact], None)
         store_cls = MagicMock(return_value=store)
         store_cls.alloc.return_value = store_cls
         store_cls.init.return_value = store

@@ -16,28 +16,17 @@ Reader(path)          — open a snapshot
 
 from __future__ import annotations
 
-import json
 import sqlite3
-from dataclasses import dataclass, field
+from collections.abc import Generator
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Generator
 
 from .attributed_body import extract_text
 from .contacts import resolve as resolve_contact
 from .epoch import apple_to_unix
-from .schema import (
-    TAPBACK_ADD_MIN,
-    TAPBACK_ADD_MAX,
-    TAPBACK_REMOVE_MIN,
-    TAPBACK_REMOVE_MAX,
-    TAPBACK_TYPE_NAMES,
-    is_tapback,
-    tapback_base_type,
-    tapback_is_remove,
-)
-
 
 # ── Data classes ─────────────────────────────────────────────────────────────
+
 
 @dataclass
 class ChatRow:
@@ -47,7 +36,7 @@ class ChatRow:
     service_name: str | None
     is_group: bool
     participants: list[str]
-    first_message_at: int | None   # Unix epoch
+    first_message_at: int | None  # Unix epoch
     last_message_at: int | None
     message_count: int
 
@@ -58,17 +47,17 @@ class MessageRow:
     chat_guid: str
     sender_handle: str | None
     sender_name: str | None
-    timestamp: int           # Unix epoch
+    timestamp: int  # Unix epoch
     text: str | None
     is_from_me: bool
     service: str | None
     reply_to_guid: str | None
     associated_message_guid: str | None
     associated_message_type: int
-    reactions_json: str | None    # pre-computed for this message (populated separately)
+    reactions_json: str | None  # pre-computed for this message (populated separately)
     has_attachments: bool
-    date_edited: int | None       # Unix epoch; None = never edited
-    date_retracted: int | None    # Unix epoch; None = not retracted
+    date_edited: int | None  # Unix epoch; None = never edited
+    date_retracted: int | None  # Unix epoch; None = not retracted
 
 
 @dataclass
@@ -79,10 +68,11 @@ class AttachmentRow:
     mime_type: str | None
     uti: str | None
     size: int
-    resolved_path: Path | None   # absolute Path or None if unresolvable
+    resolved_path: Path | None  # absolute Path or None if unresolvable
 
 
 # ── Reader ───────────────────────────────────────────────────────────────────
+
 
 class Reader:
     """Read-only interface to a snapshotted chat.db."""
@@ -180,8 +170,7 @@ class Reader:
 
     def all_messages(self) -> Generator[tuple[str, MessageRow], None, None]:
         """Yield (chat_guid, MessageRow) for every message in the database."""
-        rows = self._conn.execute(
-            """
+        rows = self._conn.execute("""
             SELECT
                 m.guid,
                 m.text,
@@ -204,16 +193,14 @@ class Reader:
             JOIN chat c ON c.ROWID = cmj.chat_id
             LEFT JOIN handle h ON h.ROWID = m.handle_id
             ORDER BY m.date ASC
-            """
-        )
+            """)
         for row in rows:
             chat_guid = row["chat_guid"]
             yield chat_guid, self._row_to_message(row, chat_guid)
 
     def all_attachments(self) -> Generator[AttachmentRow, None, None]:
         """Yield every attachment row in the database."""
-        rows = self._conn.execute(
-            """
+        rows = self._conn.execute("""
             SELECT
                 a.guid,
                 a.filename,
@@ -224,15 +211,14 @@ class Reader:
             FROM attachment a
             JOIN message_attachment_join maj ON maj.attachment_id = a.ROWID
             JOIN message m ON m.ROWID = maj.message_id
-            """
-        )
+            """)
         for row in rows:
             yield self._row_to_attachment(row, row["message_guid"])
 
     def close(self) -> None:
         self._conn.close()
 
-    def __enter__(self) -> "Reader":
+    def __enter__(self) -> Reader:
         return self
 
     def __exit__(self, *_: object) -> None:
@@ -248,39 +234,33 @@ class Reader:
 
     def _chat_handles(self) -> dict[int, list[str]]:
         """Map chat ROWID → list of handle.id strings."""
-        rows = self._conn.execute(
-            """
+        rows = self._conn.execute("""
             SELECT chj.chat_id, h.id
             FROM chat_handle_join chj
             JOIN handle h ON h.ROWID = chj.handle_id
-            """
-        ).fetchall()
+            """).fetchall()
         result: dict[int, list[str]] = {}
         for r in rows:
             result.setdefault(r[0], []).append(r[1])
         return result
 
     def _message_counts_per_chat(self) -> dict[str, int]:
-        rows = self._conn.execute(
-            """
+        rows = self._conn.execute("""
             SELECT c.guid, COUNT(*) AS cnt
             FROM chat c
             JOIN chat_message_join cmj ON cmj.chat_id = c.ROWID
             GROUP BY c.guid
-            """
-        ).fetchall()
+            """).fetchall()
         return {r[0]: r[1] for r in rows}
 
     def _first_last_per_chat(self) -> dict[str, tuple[int | None, int | None]]:
-        rows = self._conn.execute(
-            """
+        rows = self._conn.execute("""
             SELECT c.guid, MIN(m.date), MAX(m.date)
             FROM chat c
             JOIN chat_message_join cmj ON cmj.chat_id = c.ROWID
             JOIN message m ON m.ROWID = cmj.message_id
             GROUP BY c.guid
-            """
-        ).fetchall()
+            """).fetchall()
         result: dict[str, tuple[int | None, int | None]] = {}
         for guid, first, last in rows:
             first_unix = apple_to_unix(first) if first else None
@@ -289,9 +269,7 @@ class Reader:
         return result
 
     def _chat_rowid(self, chat_guid: str) -> int | None:
-        row = self._conn.execute(
-            "SELECT ROWID FROM chat WHERE guid = ?", (chat_guid,)
-        ).fetchone()
+        row = self._conn.execute("SELECT ROWID FROM chat WHERE guid = ?", (chat_guid,)).fetchone()
         return row[0] if row else None
 
     def _resolve_text(self, text: str | None, attributed_body: bytes | None) -> str | None:
@@ -301,9 +279,7 @@ class Reader:
             return extract_text(attributed_body)
         return None
 
-    def _resolve_sender(
-        self, is_from_me: int, handle_id_str: str | None
-    ) -> tuple[str | None, str | None]:
+    def _resolve_sender(self, is_from_me: int, handle_id_str: str | None) -> tuple[str | None, str | None]:
         """Return (sender_handle, sender_name)."""
         if is_from_me:
             return None, "Me"

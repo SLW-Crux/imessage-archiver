@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 
@@ -30,11 +29,16 @@ class TestArchiveCommand:
     def test_archive_medium_db(self, runner: CliRunner, tmp_path: Path) -> None:
         """Full archive run on medium.db via CLI — end-to-end integration."""
         bundle = tmp_path / "archive.imarchive"
-        result = runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("medium.db")),
-            "--dest", str(bundle),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("medium.db")),
+                "--dest",
+                str(bundle),
+            ],
+        )
         assert result.exit_code == 0, result.output
         assert bundle.exists()
         assert (bundle / "archive.sqlite").exists()
@@ -42,33 +46,48 @@ class TestArchiveCommand:
         assert "Done!" in result.output
 
     def test_archive_dry_run(self, runner: CliRunner, tmp_path: Path) -> None:
-        result = runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("tiny.db")),
-            "--dest", str(tmp_path / "archive.imarchive"),
-            "--dry-run",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--dest",
+                str(tmp_path / "archive.imarchive"),
+                "--dry-run",
+            ],
+        )
         assert result.exit_code == 0, result.output
         assert "Dry run" in result.output
         assert not (tmp_path / "archive.imarchive").exists()
 
     def test_archive_missing_source_exits_nonzero(self, runner: CliRunner, tmp_path: Path) -> None:
-        result = runner.invoke(cli, [
-            "archive",
-            "--source", str(tmp_path / "nonexistent.db"),
-            "--dest", str(tmp_path / "archive.imarchive"),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(tmp_path / "nonexistent.db"),
+                "--dest",
+                str(tmp_path / "archive.imarchive"),
+            ],
+        )
         assert result.exit_code != 0
 
 
 class TestVerifyCommand:
     def test_verify_good_bundle(self, runner: CliRunner, tmp_path: Path) -> None:
         bundle = tmp_path / "archive.imarchive"
-        runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("tiny.db")),
-            "--dest", str(bundle),
-        ])
+        runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--dest",
+                str(bundle),
+            ],
+        )
         result = runner.invoke(cli, ["verify", "--archive", str(bundle)])
         assert result.exit_code == 0, result.output
         assert "PASS" in result.output
@@ -81,11 +100,16 @@ class TestVerifyCommand:
 class TestStatsCommand:
     def test_stats_shows_counts(self, runner: CliRunner, tmp_path: Path) -> None:
         bundle = tmp_path / "archive.imarchive"
-        runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("tiny.db")),
-            "--dest", str(bundle),
-        ])
+        runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--dest",
+                str(bundle),
+            ],
+        )
         result = runner.invoke(cli, ["stats", "--archive", str(bundle)])
         assert result.exit_code == 0, result.output
         assert "Messages" in result.output
@@ -98,11 +122,16 @@ class TestStatsCommand:
 class TestInfoCommand:
     def test_info_shows_manifest(self, runner: CliRunner, tmp_path: Path) -> None:
         bundle = tmp_path / "archive.imarchive"
-        runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("tiny.db")),
-            "--dest", str(bundle),
-        ])
+        runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--dest",
+                str(bundle),
+            ],
+        )
         result = runner.invoke(cli, ["info", "--archive", str(bundle)])
         assert result.exit_code == 0, result.output
         assert "schema_version" in result.output
@@ -122,20 +151,30 @@ class TestSetupCommand:
 class TestMergeCommand:
     def test_merge_idempotent(self, runner: CliRunner, tmp_path: Path) -> None:
         bundle = tmp_path / "archive.imarchive"
-        runner.invoke(cli, [
-            "archive",
-            "--source", str(_fixture("tiny.db")),
-            "--dest", str(bundle),
-        ])
+        runner.invoke(
+            cli,
+            [
+                "archive",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--dest",
+                str(bundle),
+            ],
+        )
         conn = sqlite3.connect(str(bundle / "archive.sqlite"))
         count1 = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
         conn.close()
 
-        result = runner.invoke(cli, [
-            "merge",
-            "--source", str(_fixture("tiny.db")),
-            "--archive", str(bundle),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "merge",
+                "--source",
+                str(_fixture("tiny.db")),
+                "--archive",
+                str(bundle),
+            ],
+        )
         assert result.exit_code == 0, result.output
 
         conn = sqlite3.connect(str(bundle / "archive.sqlite"))

@@ -10,19 +10,18 @@ Non-destructive guarantees enforced here:
 from __future__ import annotations
 
 import json
-import os
 import platform
 import sqlite3
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
-from typing import Iterator
 
 from imessage_archiver import __version__
 from imessage_archiver.core.attachments import AttachmentState, classify, sha256_file
 from imessage_archiver.core.tar_writer import TarWriter
 from imessage_archiver.db.reader import AttachmentRow, ChatRow, MessageRow, Reader
-from imessage_archiver.db.schema import TAPBACK_TYPE_NAMES, is_tapback, tapback_base_type
+from imessage_archiver.db.schema import TAPBACK_TYPE_NAMES, tapback_base_type
 
 _SCHEMA_VERSION = 1
 _DDL = """
@@ -128,8 +127,8 @@ class ArchiveWriter:
         reader: Reader,
         source_sha256: str = "",
         source_db_path: str = "",
-        progress: "ProgressCallback | None" = None,
-    ) -> "RunStats":
+        progress: ProgressCallback | None = None,
+    ) -> RunStats:
         """Archive all messages and attachments from *reader* into the bundle."""
         run_id = str(uuid.uuid4())
         started_at = int(time.time())
@@ -177,7 +176,7 @@ class ArchiveWriter:
             self._conn.close()
             self._conn = None
 
-    def __enter__(self) -> "ArchiveWriter":
+    def __enter__(self) -> ArchiveWriter:
         return self
 
     def __exit__(self, *_: object) -> None:
@@ -226,7 +225,7 @@ class ArchiveWriter:
         self._conn.commit()
         return cur.lastrowid  # type: ignore[return-value]
 
-    def _finish_run(self, run_rowid: int, stats: "RunStats", started_at: int) -> None:
+    def _finish_run(self, run_rowid: int, stats: RunStats, started_at: int) -> None:
         assert self._conn
         self._conn.execute(
             """UPDATE archive_runs SET completed_at=?, message_count=?,
@@ -302,7 +301,7 @@ class ArchiveWriter:
         self,
         att: AttachmentRow,
         tar: TarWriter,
-    ) -> "_AttStats":
+    ) -> _AttStats:
         assert self._conn
         state = classify(att)
         tar_offset: int | None = None
@@ -356,7 +355,7 @@ class ArchiveWriter:
         ).fetchall()
 
         # Build dict: target_guid → list of active reactions
-        reactions: dict[str, list[dict]] = {}
+        reactions: dict[str, list[dict[str, object]]] = {}
         for target_guid, msg_type, sender_name, sender_handle, ts in tapbacks:
             if not target_guid:
                 continue
@@ -366,23 +365,28 @@ class ArchiveWriter:
             type_name = TAPBACK_TYPE_NAMES.get(base, "unknown")
 
             from imessage_archiver.db.schema import tapback_is_remove
+
             if tapback_is_remove(msg_type):
                 # Remove any existing reaction from this sender of this type
                 reactions[target_guid] = [
-                    r for r in reactions[target_guid]
+                    r
+                    for r in reactions[target_guid]
                     if not (r["from"] == from_name and r["type"] == type_name)
                 ]
             else:
                 # Upsert: replace existing reaction of same type from same sender
                 reactions[target_guid] = [
-                    r for r in reactions[target_guid]
+                    r
+                    for r in reactions[target_guid]
                     if not (r["from"] == from_name and r["type"] == type_name)
                 ]
-                reactions[target_guid].append({
-                    "from": from_name,
-                    "type": type_name,
-                    "timestamp": ts,
-                })
+                reactions[target_guid].append(
+                    {
+                        "from": from_name,
+                        "type": type_name,
+                        "timestamp": ts,
+                    }
+                )
 
         for target_guid, reaction_list in reactions.items():
             self._conn.execute(
@@ -391,8 +395,8 @@ class ArchiveWriter:
             )
         self._conn.commit()
 
-    def _write_manifest(self, source_sha256: str, stats: "RunStats") -> None:
-        existing: dict = {}
+    def _write_manifest(self, source_sha256: str, stats: RunStats) -> None:
+        existing: dict[str, object] = {}
         if self._manifest_path.exists():
             try:
                 existing = json.loads(self._manifest_path.read_text())
@@ -422,18 +426,19 @@ class ArchiveWriter:
 
     def _count(self, table: str) -> int:
         assert self._conn
-        return self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        result = self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        return int(result)
 
     def _count_missing(self) -> int:
         assert self._conn
-        return self._conn.execute(
-            "SELECT COUNT(*) FROM attachments WHERE state='MISSING'"
-        ).fetchone()[0]
+        result = self._conn.execute("SELECT COUNT(*) FROM attachments WHERE state='MISSING'").fetchone()[0]
+        return int(result)
 
 
 # ------------------------------------------------------------------
 # Small data holders
 # ------------------------------------------------------------------
+
 
 class RunStats:
     def __init__(self) -> None:
@@ -454,13 +459,13 @@ class _AttStats:
 # Typing helpers
 # ------------------------------------------------------------------
 
-from typing import Callable
 ProgressCallback = Callable[[ChatRow, RunStats], None]
 
 
 def _iso_now() -> str:
     import datetime
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _macos_version() -> str:

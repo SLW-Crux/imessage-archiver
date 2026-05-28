@@ -1,6 +1,7 @@
 """Unit tests for attributedBody parser."""
 
 import plistlib
+
 from imessage_archiver.db.attributed_body import extract_text
 
 
@@ -80,6 +81,7 @@ class TestExtractText:
     def test_typedstream_fallback(self) -> None:
         """Legacy typedstream: craft bytes with a length-prefixed UTF-8 run."""
         import struct
+
         text = "Hello typedstream"
         encoded = text.encode("utf-8")
         # Build a fake typedstream: 2-byte big-endian length + data
@@ -111,7 +113,7 @@ class TestExtractText:
                 {
                     "$class": plistlib.UID(2),
                     # No NS.string here — only NS.bytes
-                    "NS.bytes": "via bytes".encode("utf-8"),
+                    "NS.bytes": b"via bytes",
                 },
                 {"$classname": "NSMutableString", "$classes": ["NSMutableString", "NSString"]},
             ],
@@ -155,14 +157,11 @@ class TestExtractText:
     def test_typedstream_invalid_utf8_skipped(self) -> None:
         """Length-prefixed run that is not valid UTF-8 — hits UnicodeDecodeError branch."""
         import struct
+
         # Valid UTF-8 text we want found
-        good = "found me".encode("utf-8")
+        good = b"found me"
         # Invalid UTF-8 bytes (lone 0xFF byte) with a valid length prefix
         bad = b"\xff\xfe\xfd\xfc"
-        blob = (
-            b"\x00" * 4
-            + struct.pack(">H", len(bad)) + bad
-            + struct.pack(">H", len(good)) + good
-        )
+        blob = b"\x00" * 4 + struct.pack(">H", len(bad)) + bad + struct.pack(">H", len(good)) + good
         result = extract_text(blob)
         assert result == "found me"

@@ -29,6 +29,7 @@ def _fixture(name: str) -> Path:
 # Cross-version schema coverage
 # ----------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("variant", ["ventura", "sonoma", "sequoia"])
 def test_archive_cross_version_schema(tmp_path: Path, variant: str) -> None:
     """Each macOS variant DB must archive and verify cleanly.
@@ -60,6 +61,7 @@ def test_archive_cross_version_schema(tmp_path: Path, variant: str) -> None:
 # ----------------------------------------------------------------------
 # Large-DB stress test (regenerated on demand, never committed)
 # ----------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def large_db(tmp_path_factory) -> Path:
@@ -128,9 +130,7 @@ def test_large_db_incremental_is_fast(tmp_path: Path, large_db: Path) -> None:
     # No new attachments should be written on re-run (INSERT OR IGNORE wins)
     assert stats2.attachments_written == 0
     # Second pass walks all rows but writes none — should be much faster
-    assert second_elapsed < 30, (
-        f"Incremental re-archive took {second_elapsed:.1f}s — slower than expected"
-    )
+    assert second_elapsed < 30, f"Incremental re-archive took {second_elapsed:.1f}s — slower than expected"
 
     # Bundle size unchanged
     con = sqlite3.connect(str(bundle / "archive.sqlite"))

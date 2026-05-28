@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt, QObject, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import QAbstractListModel, QModelIndex, QObject, Qt
 
-from imessage_archiver.db.reader import ChatRow, MessageRow
+from imessage_archiver.db.reader import ChatRow
 
 
 class ChatListModel(QAbstractListModel):
@@ -43,7 +42,8 @@ class ChatListModel(QAbstractListModel):
             self._filtered = list(self._all_chats)
         else:
             self._filtered = [
-                c for c in self._all_chats
+                c
+                for c in self._all_chats
                 if self._filter_text in (c.display_name or "").lower()
                 or self._filter_text in (c.chat_identifier or "").lower()
             ]

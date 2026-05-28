@@ -6,8 +6,6 @@ import hashlib
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 from imessage_archiver.core.attachments import AttachmentState, classify, sha256_file
 
 

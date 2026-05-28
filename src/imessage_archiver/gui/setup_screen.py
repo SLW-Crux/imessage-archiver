@@ -4,16 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QDesktopServices, QFont
+from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import QUrl
-
 
 _FDA_INSTRUCTIONS = """
 <h2>Full Disk Access Required</h2>
@@ -61,7 +59,9 @@ class SetupScreen(QWidget):
         layout.addWidget(check_btn)
 
     def _open_privacy_settings(self) -> None:
-        QDesktopServices.openUrl(QUrl("x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"))
+        QDesktopServices.openUrl(
+            QUrl("x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+        )
 
     def _check_again(self) -> None:
         if _has_full_disk_access():

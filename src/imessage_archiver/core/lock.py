@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import time
 from pathlib import Path
 
 
@@ -49,7 +48,7 @@ class ArchiveLock:
             self._path.unlink(missing_ok=True)
             self._locked = False
 
-    def __enter__(self) -> "ArchiveLock":
+    def __enter__(self) -> ArchiveLock:
         self.acquire()
         return self
 

@@ -47,14 +47,12 @@ def verify_bundle(bundle_path: Path, log_path: Path | None = None) -> VerifyResu
     t0 = time.monotonic()
 
     conn = sqlite3.connect(f"file:{sqlite_path}?mode=ro&immutable=1", uri=True)
-    rows = conn.execute(
-        """SELECT attachment_guid, sha256, tar_offset, tar_length
+    rows = conn.execute("""SELECT attachment_guid, sha256, tar_offset, tar_length
            FROM attachments
            WHERE state='LOCAL_PRESENT'
              AND tar_offset IS NOT NULL
              AND tar_length IS NOT NULL
-             AND sha256 IS NOT NULL"""
-    ).fetchall()
+             AND sha256 IS NOT NULL""").fetchall()
     conn.close()
 
     lines: list[str] = [
@@ -92,4 +90,5 @@ def verify_bundle(bundle_path: Path, log_path: Path | None = None) -> VerifyResu
 
 def _iso_now() -> str:
     import datetime
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

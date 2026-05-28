@@ -5,11 +5,9 @@ from __future__ import annotations
 import datetime
 import os
 
-import pytest
-
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from imessage_archiver.gui.archive_panel import _next_year_same_day, _REMINDER_HOUR
+from imessage_archiver.gui.archive_panel import _REMINDER_HOUR, _next_year_same_day
 
 
 class TestNextYearSameDay:

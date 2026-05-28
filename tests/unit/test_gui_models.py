@@ -10,7 +10,7 @@ import pytest
 # Must set QT_QPA_PLATFORM before any PySide6 import so Qt doesn't try to open a display.
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import Qt, QModelIndex
+from PySide6.QtCore import QModelIndex, Qt
 from PySide6.QtWidgets import QApplication
 
 from imessage_archiver.db.reader import ChatRow

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,14 +11,14 @@ if TYPE_CHECKING:
     from imessage_archiver.db.reader import AttachmentRow
 
 
-class AttachmentState(str, Enum):
+class AttachmentState(StrEnum):
     LOCAL_PRESENT = "LOCAL_PRESENT"
     MISSING = "MISSING"
     ZERO_BYTE = "ZERO_BYTE"
     UNREADABLE = "UNREADABLE"
 
 
-def classify(att: "AttachmentRow") -> AttachmentState:
+def classify(att: AttachmentRow) -> AttachmentState:
     """Return the attachment state for *att*.
 
     Checks whether the resolved path exists on disk and is readable.

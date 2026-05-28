@@ -9,7 +9,6 @@ Falls back gracefully to the raw handle string when:
 from __future__ import annotations
 
 import functools
-import re
 
 _contacts_available: bool | None = None
 _CNContactStore: object | None = None
@@ -21,7 +20,7 @@ def _init_contacts() -> bool:
     if _contacts_available is not None:
         return _contacts_available
     try:
-        import Contacts  # type: ignore[import]
+        import Contacts
 
         _CNContactStore = Contacts.CNContactStore
         _contacts_available = True
@@ -51,7 +50,7 @@ def resolve(handle: str) -> str:
 
 def _query_contacts(handle: str) -> str:
     """Query CNContactStore for a matching contact name."""
-    import Contacts  # type: ignore[import]
+    import Contacts
 
     store = Contacts.CNContactStore.alloc().init()
     keys = [
@@ -68,9 +67,7 @@ def _query_contacts(handle: str) -> str:
         phone = Contacts.CNPhoneNumber.phoneNumberWithStringValue_(handle)
         predicate = Contacts.CNContact.predicateForContactsMatchingPhoneNumber_(phone)
 
-    contacts, error = store.unifiedContactsMatchingPredicate_keysToFetch_error_(
-        predicate, keys, None
-    )
+    contacts, error = store.unifiedContactsMatchingPredicate_keysToFetch_error_(predicate, keys, None)
     if error or not contacts:
         return handle
 

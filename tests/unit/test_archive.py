@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from imessage_archiver.core.archive import ArchiveWriter, RunStats, _iso_now, _macos_version
+from imessage_archiver.core.archive import ArchiveWriter, _iso_now, _macos_version
 from imessage_archiver.db.reader import Reader
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
@@ -79,6 +79,7 @@ class TestRebuildReactionsNullTarget:
 
         # Inject a tapback with NULL associated_message_guid
         import sqlite3
+
         conn = sqlite3.connect(str(bundle / "archive.sqlite"))
         conn.execute("PRAGMA foreign_keys=OFF")
         # Get any existing message as a base
@@ -128,7 +129,7 @@ class TestMergeModule:
 
     def test_merge_default_source_db(self, tmp_path: Path) -> None:
         """merge() without source_db uses _default_chat_db() — covers line 59."""
-        from imessage_archiver.core.merge import merge, _default_chat_db
+        from imessage_archiver.core.merge import _default_chat_db, merge
 
         snap_path = _fixture("tiny.db")
         bundle = tmp_path / "archive.imarchive"

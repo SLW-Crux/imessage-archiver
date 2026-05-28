@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from imessage_archiver.db.snapshot import snapshot, _sha256
+from imessage_archiver.db.snapshot import _sha256, snapshot
 
 
 class TestSha256:
@@ -16,6 +15,7 @@ class TestSha256:
         f = tmp_path / "test.bin"
         f.write_bytes(b"hello")
         import hashlib
+
         expected = hashlib.sha256(b"hello").hexdigest()
         assert _sha256(f) == expected
 
@@ -23,6 +23,7 @@ class TestSha256:
         f = tmp_path / "empty.bin"
         f.write_bytes(b"")
         import hashlib
+
         assert _sha256(f) == hashlib.sha256(b"").hexdigest()
 
 

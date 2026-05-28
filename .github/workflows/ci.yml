@@ -13,8 +13,8 @@ jobs:
     name: Lint & type-check
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv
@@ -32,7 +32,7 @@ jobs:
     name: Reject destructive SQL on chat.db
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Grep for destructive SQL targeting source DB
         run: |
           ! grep -rEi \
@@ -43,8 +43,8 @@ jobs:
     name: Tests (Layers 1–4)
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv
@@ -60,7 +60,7 @@ jobs:
             -v --cov=imessage_archiver --cov-report=term-missing \
             --cov-report=html --cov-fail-under=80
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: htmlcov/
@@ -70,8 +70,8 @@ jobs:
     runs-on: macos-14
     if: github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv

@@ -30,6 +30,7 @@ struct SearchView: View {
             searchTask?.cancel()
             searchTask = Task { await debouncedSearch(newValue) }
         }
+        .onDisappear { searchTask?.cancel() }
     }
 
     private func debouncedSearch(_ q: String) async {
@@ -73,7 +74,7 @@ struct SearchResultRow: View {
 
 private extension String {
     func removingFTSMarkers() -> String {
-        replacingOccurrences(of: "\u{2068}MATCH_START\u{2069}", with: "")
-            .replacingOccurrences(of: "\u{2068}MATCH_END\u{2069}", with: "")
+        replacingOccurrences(of: "\u{E000}", with: "")
+            .replacingOccurrences(of: "\u{E001}", with: "")
     }
 }

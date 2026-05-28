@@ -16,8 +16,11 @@ struct SearchHit: Identifiable, Hashable, Sendable {
         var result = AttributedString()
         var cursor = raw.startIndex
 
-        let startMarker = "\u{2068}MATCH_START\u{2069}"
-        let endMarker = "\u{2068}MATCH_END\u{2069}"
+        // U+E000 / U+E001 are Private Use Area codepoints — guaranteed not
+        // to appear in valid Unicode text by convention. Replaces the
+        // FSI/PDI sentinels which could collide with bidirectional text.
+        let startMarker = "\u{E000}"
+        let endMarker = "\u{E001}"
 
         while cursor < raw.endIndex {
             guard let startRange = raw.range(of: startMarker, range: cursor..<raw.endIndex) else {

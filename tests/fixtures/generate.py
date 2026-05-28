@@ -521,6 +521,61 @@ def build_medium(path: Path) -> None:
     conn.close()
 
 
+def build_large(path: Path) -> None:
+    """large.db — 200 chats, 50,000 messages, 1,000 attachments.
+
+    Exercises pagination, FTS5 over a large corpus, and the
+    tar-append + INSERT OR IGNORE incremental path. Generated on demand by
+    the Phase 7 large-DB integration test, not committed.
+    """
+    rng = random.Random(7)
+    conn = sqlite3.connect(str(path))
+    create_schema(conn)
+
+    handle_rowids = [insert_handle(conn, h, s) for h, s in HANDLES]
+
+    chat_rowids: list[int] = []
+    for i in range(200):
+        participants = rng.sample(handle_rowids, rng.randint(1, 4))
+        h_id, h_svc = HANDLES[handle_rowids.index(participants[0])]
+        cg = make_guid("chat", 10_000 + i)
+        is_group = len(participants) > 1
+        room = f"room-large-{i}" if is_group else None
+        name = f"Group {i}" if is_group else None
+        cr = insert_chat(conn, cg, h_id, h_svc, name, room, participants)
+        chat_rowids.append(cr)
+
+    base = time.time() - 3 * 365 * 86400
+    att_count = 0
+    for msg_i in range(50_000):
+        g = make_guid("msg", 100_000 + msg_i)
+        t = unix_to_apple_ns(base + msg_i * 30 + rng.uniform(-15, 15))
+        chat_rowid = chat_rowids[msg_i % 200]
+        is_me = rng.random() < 0.4
+        handle = 0 if is_me else handle_rowids[msg_i % len(handle_rowids)]
+        text = rng.choice(SAMPLE_TEXTS)
+        has_att = att_count < 1_000 and rng.random() < 0.02
+        rowid = insert_message(conn, g, text, handle, int(t), int(is_me),
+                               "iMessage", cache_has_attachments=int(has_att))
+        conn.execute(
+            "INSERT INTO chat_message_join(chat_id, message_id, message_date) VALUES (?, ?, ?)",
+            (chat_rowid, rowid, int(t)),
+        )
+        if has_att:
+            ag = make_guid("att", 10_000 + att_count)
+            data = make_tiny_png()
+            fpath = write_attachment_file(ag, ".png", data)
+            att_rowid = insert_attachment(conn, ag, fpath, "image/png", "public.png", len(data))
+            conn.execute(
+                "INSERT INTO message_attachment_join(message_id, attachment_id) VALUES (?, ?)",
+                (rowid, att_rowid),
+            )
+            att_count += 1
+
+    conn.commit()
+    conn.close()
+
+
 def build_edge(path: Path) -> None:
     """edge.db — edge cases: null text, tapbacks, replies, emoji, RTL, edits, retractions."""
     conn = sqlite3.connect(str(path))

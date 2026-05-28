@@ -24,20 +24,20 @@ A read-only SwiftUI app that opens the archive bundle from iCloud Drive and lets
 ## Project Setup
 
 ### Bundle identifier
-`org.imessagearchiver.ios`
+`com.slw.imessage-archiver`
 
 ### iCloud container
-`iCloud.org.imessagearchiver` — must match Mac archiver exactly.
+`iCloud.com.slw.imessage-archiver` — must match Mac archiver exactly.
 
 ### Capabilities (Xcode)
 - iCloud → iCloud Documents
-- iCloud → Custom container: `iCloud.org.imessagearchiver`
+- iCloud → Custom container: `iCloud.com.slw.imessage-archiver`
 
 ### Entitlements
 ```xml
 <key>com.apple.developer.icloud-container-identifiers</key>
 <array>
-    <string>iCloud.org.imessagearchiver</string>
+    <string>iCloud.com.slw.imessage-archiver</string>
 </array>
 <key>com.apple.developer.icloud-services</key>
 <array>
@@ -45,7 +45,7 @@ A read-only SwiftUI app that opens the archive bundle from iCloud Drive and lets
 </array>
 <key>com.apple.developer.ubiquity-container-identifiers</key>
 <array>
-    <string>iCloud.org.imessagearchiver</string>
+    <string>iCloud.com.slw.imessage-archiver</string>
 </array>
 ```
 
@@ -53,7 +53,7 @@ A read-only SwiftUI app that opens the archive bundle from iCloud Drive and lets
 ```xml
 <key>NSUbiquitousContainers</key>
 <dict>
-    <key>iCloud.org.imessagearchiver</key>
+    <key>iCloud.com.slw.imessage-archiver</key>
     <dict>
         <key>NSUbiquitousContainerIsDocumentScopePublic</key>
         <true/>

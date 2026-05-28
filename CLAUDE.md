@@ -267,9 +267,9 @@ Follow phases sequentially. Each phase must pass its tests before moving on.
 
 **Before starting Phase 5, ask the human:**
 - Confirm Apple Developer account is active
-- Confirm `iCloud.org.imessagearchiver` container is created in developer.apple.com
+- Confirm `iCloud.com.slw.imessage-archiver` container is created in developer.apple.com
 - Confirm Xcode signing identity is set up
-- Get bundle ID confirmation (suggested: `org.imessagearchiver.ios`)
+- Get bundle ID confirmation (suggested: `com.slw.imessage-archiver`)
 - Get team ID
 
 ### Phase 5 — iOS reader (paused start; resume after gate)

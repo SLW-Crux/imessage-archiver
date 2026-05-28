@@ -33,13 +33,14 @@ from imessage_archiver.db.snapshot import snapshot
 console = Console()
 err_console = Console(stderr=True, style="bold red")
 
+# Bundle ID for the iOS reader app. The Mac archiver writes into the iOS app's
+# iCloud ubiquity container so the iOS app's NSMetadataQueryUbiquitousDocumentsScope
+# can discover the bundle. Writing to generic iCloud Drive (com~apple~CloudDocs)
+# would put the bundle in a scope iOS cannot enumerate.
+_IOS_BUNDLE_ID = "com.slw.imessage-archiver"
+_ICLOUD_CONTAINER = f"iCloud~{_IOS_BUNDLE_ID.replace('.', '~')}"  # iCloud~com~slw~imessage-archiver
 _DEFAULT_DEST = (
-    Path.home()
-    / "Library"
-    / "Mobile Documents"
-    / "com~apple~CloudDocs"
-    / "iMessage Archive"
-    / "archive.imarchive"
+    Path.home() / "Library" / "Mobile Documents" / _ICLOUD_CONTAINER / "Documents" / "archive.imarchive"
 )
 _LOCK_PATH = Path.home() / ".imessage-archiver" / "archive.lock"
 

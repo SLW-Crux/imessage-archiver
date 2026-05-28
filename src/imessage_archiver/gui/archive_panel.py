@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import subprocess
 import sys
 from pathlib import Path
@@ -79,14 +80,23 @@ class ArchivePanel(QWidget):
         layout.addStretch()
 
         # --- Post-archive actions ---
-        self._post_group = QGroupBox("After Archiving")
+        self._post_group = QGroupBox("Next steps — set up the yearly workflow")
         post_layout = QVBoxLayout(self._post_group)
+
+        intro = QLabel(
+            "Your messages are now safely archived. "
+            "To keep your Mac fast, enable Messages → Keep Messages: 1 Year, "
+            "then set a yearly reminder to re-run this archiver."
+        )
+        intro.setWordWrap(True)
+        intro.setStyleSheet("color: gray;")
+        post_layout.addWidget(intro)
 
         cal_btn = QPushButton("Add Yearly Reminder to Calendar")
         cal_btn.clicked.connect(self._add_calendar_reminder)
         post_layout.addWidget(cal_btn)
 
-        messages_btn = QPushButton("Open Messages Settings (Enable 1-Year Limit)")
+        messages_btn = QPushButton("Open Messages Settings…")
         messages_btn.clicked.connect(self._open_messages_settings)
         post_layout.addWidget(messages_btn)
 
@@ -159,9 +169,37 @@ class ArchivePanel(QWidget):
         ])
 
 
+_REMINDER_TITLE = "Archive iMessages (yearly)"
+_REMINDER_NOTES = (
+    "Run iMessage Archiver to capture this year's conversations and "
+    "attachments before they age out of the 1-year Keep Messages window. "
+    "App: https://github.com/SLW-Crux/imessage-archiver"
+)
+_REMINDER_HOUR = 10  # 10am local time — sensible default, not "right now"
+
+
+def _next_year_same_day(now: datetime.datetime) -> datetime.datetime:
+    """Return ``now`` shifted one year forward, snapped to 10am.
+
+    Handles the Feb 29 → Feb 28 edge case (a Feb 29 reminder on a non-leap
+    year falls back to Feb 28; the EKRecurrenceRule then handles future
+    instances per Apple's standard yearly recurrence rules).
+    """
+    target_year = now.year + 1
+    try:
+        return now.replace(
+            year=target_year, hour=_REMINDER_HOUR, minute=0, second=0, microsecond=0
+        )
+    except ValueError:
+        # Feb 29 in a leap year → snap to Feb 28 next year
+        return now.replace(
+            year=target_year, month=2, day=28,
+            hour=_REMINDER_HOUR, minute=0, second=0, microsecond=0,
+        )
+
+
 def _add_eventkit_reminder() -> None:
-    """Add a yearly 'Archive iMessages' reminder using EventKit via PyObjC."""
-    import datetime
+    """Add a yearly archive reminder via EventKit (PyObjC)."""
     try:
         import EventKit  # type: ignore[import]
     except ImportError:
@@ -169,7 +207,6 @@ def _add_eventkit_reminder() -> None:
 
     store = EventKit.EKEventStore.alloc().init()
 
-    # Request calendar access (synchronous in older macOS; async in newer)
     granted = [False]
     error_box = [None]
 
@@ -186,11 +223,12 @@ def _add_eventkit_reminder() -> None:
 
     calendar = store.defaultCalendarForNewEvents()
     event = EventKit.EKEvent.eventWithEventStore_(store)
-    event.setTitle_("Archive iMessages")
-    now = datetime.datetime.now()
-    next_year = now.replace(year=now.year + 1)
-    event.setStartDate_(next_year)
-    event.setEndDate_(next_year + datetime.timedelta(hours=1))
+    event.setTitle_(_REMINDER_TITLE)
+    event.setNotes_(_REMINDER_NOTES)
+
+    start = _next_year_same_day(datetime.datetime.now())
+    event.setStartDate_(start)
+    event.setEndDate_(start + datetime.timedelta(minutes=30))
     event.setCalendar_(calendar)
 
     rule = EventKit.EKRecurrenceRule.alloc().initRecurrenceWithFrequency_interval_end_(

@@ -296,8 +296,15 @@ class Reader:
             row["text"],
             row["attributedBody"] if "attributedBody" in row.keys() else None,
         )
+        # Reject rows with a missing or zero date — these are typically
+        # system markers that aren't real conversation messages. Including
+        # them as timestamp=0 would put a 1970-01-01 separator in the
+        # iOS thread view (CodeQual-M9).
         raw_date = row["date"] or 0
-        timestamp = apple_to_unix(raw_date) if raw_date else 0
+        if not raw_date:
+            timestamp = 0  # fallthrough; caller may want to skip
+        else:
+            timestamp = apple_to_unix(raw_date)
 
         raw_edited = row["date_edited"] if "date_edited" in row.keys() else 0
         raw_retracted = row["date_retracted"] if "date_retracted" in row.keys() else 0
@@ -342,10 +349,50 @@ class Reader:
         )
 
 
-def _resolve_attachment_path(filename: str) -> Path:
-    """Resolve an attachment filename to an absolute Path."""
+_ATTACHMENT_ROOTS = (
+    Path.home() / "Library" / "Messages" / "Attachments",
+    # Synthetic fixtures live next to the .db (tests/fixtures/Attachments/).
+    # This is opt-in via path matching only — production never hits it.
+    Path(__file__).resolve().parent.parent.parent.parent / "tests" / "fixtures",
+)
+
+
+def _resolve_attachment_path(filename: str) -> Path | None:
+    """Resolve an attachment filename to an absolute Path.
+
+    Returns None if the resolved path is outside the trusted attachment
+    roots. Defense in depth: a tampered chat.db could insert a row whose
+    filename points at ``~/.ssh/id_rsa`` or similar; we refuse to read
+    files outside ``~/Library/Messages/Attachments/`` so a malicious row
+    cannot exfiltrate arbitrary user data into the archive bundle.
+    """
     if filename.startswith("~"):
-        return Path(filename).expanduser()
-    if filename.startswith("/"):
-        return Path(filename)
-    return Path.home() / "Library" / "Messages" / filename
+        candidate = Path(filename).expanduser()
+    elif filename.startswith("/"):
+        candidate = Path(filename)
+    else:
+        # Bare basename — historically Apple stored these under
+        # ~/Library/Messages/. The Messages.app codebase has not used
+        # this form in years, but fixtures may. Allow under the Messages
+        # tree only.
+        candidate = Path.home() / "Library" / "Messages" / filename
+
+    try:
+        resolved = candidate.resolve(strict=False)
+    except OSError:
+        return None
+
+    # Resolve roots to handle symlinks like ~ → /Users/...
+    for root in _ATTACHMENT_ROOTS:
+        try:
+            root_resolved = root.resolve(strict=False)
+        except OSError:
+            continue
+        # Either the file is inside the root, or it IS the root (e.g.
+        # tests pass an exact Attachments/ subpath).
+        try:
+            resolved.relative_to(root_resolved)
+            return resolved
+        except ValueError:
+            continue
+    return None

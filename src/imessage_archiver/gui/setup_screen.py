@@ -69,9 +69,39 @@ class SetupScreen(QWidget):
 
 
 def _has_full_disk_access() -> bool:
-    """Return True if chat.db is accessible."""
+    """Return True if chat.db is accessible.
+
+    On Macs where Messages is not configured at all, chat.db does not
+    exist — that's a different situation from FDA-denied. Both currently
+    fall through this False return; callers can use :func:`fda_state`
+    to distinguish them.
+    """
+    return fda_state() == "ok"
+
+
+def fda_state() -> str:
+    """Distinguish 'ok' / 'denied' / 'missing' for Full Disk Access.
+
+    - ``"ok"``: chat.db opens for reading.
+    - ``"denied"``: chat.db exists but cannot be read (FDA not granted).
+    - ``"missing"``: chat.db doesn't exist (Messages not configured).
+    """
+    import os
+
+    try:
+        # os.stat tells PermissionError from FileNotFoundError reliably.
+        os.stat(_CHAT_DB)
+    except FileNotFoundError:
+        return "missing"
+    except PermissionError:
+        return "denied"
+    except OSError:
+        return "denied"
+
     try:
         _CHAT_DB.open("rb").close()
-        return True
-    except (PermissionError, FileNotFoundError):
-        return False
+        return "ok"
+    except PermissionError:
+        return "denied"
+    except OSError:
+        return "denied"

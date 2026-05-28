@@ -19,13 +19,24 @@ import plistlib
 import struct
 from typing import Any
 
+# Hard cap on the attributedBody size we attempt to parse. A pathologically
+# large blob (corrupted row, or one synthesised by a tampered chat.db) would
+# otherwise stall the archive process for minutes in the O(n²) typedstream
+# scan. 2 MiB is far above any legitimate message body.
+_MAX_BLOB_SIZE = 2 * 1024 * 1024
+
 
 def extract_text(blob: bytes) -> str | None:
     """Extract the plain-text string from an attributedBody blob.
 
-    Returns ``None`` if the blob is empty, malformed, or contains no text.
+    Returns ``None`` if the blob is empty, oversized, malformed, or
+    contains no text.
     """
     if not blob:
+        return None
+    if len(blob) > _MAX_BLOB_SIZE:
+        # Refuse to scan a multi-megabyte blob — almost certainly garbage
+        # and the typedstream scan is O(n) per byte (Sec-M3).
         return None
 
     # The blob is either raw bplist data or a typedstream.

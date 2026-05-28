@@ -158,7 +158,20 @@ class ArchivePanel(QWidget):
             )
 
     def _open_messages_settings(self) -> None:
-        subprocess.Popen(["open", "x-apple.systempreferences:com.apple.Messages-Settings.extension"])
+        # Hardcoded URL — never user input. The /usr/bin/open command
+        # returns 0 on success, non-zero if the URL handler is missing.
+        result = subprocess.run(
+            ["open", "x-apple.systempreferences:com.apple.Messages-Settings.extension"],
+            check=False,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            QMessageBox.warning(
+                self,
+                "Could not open Messages Settings",
+                "macOS could not open the Messages settings pane. "
+                "Open it manually via System Settings → Messages.",
+            )
 
 
 _REMINDER_TITLE = "Archive iMessages (yearly)"

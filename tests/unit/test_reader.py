@@ -194,15 +194,27 @@ class TestReaderCoverageBranches:
         ab_msgs = [m for m in all_msgs if m.text == "via attributedBody"]
         assert len(ab_msgs) >= 1
 
-    def test_resolve_attachment_path_absolute(self) -> None:
-        """Absolute filename path — exercises line 373-374."""
+    def test_resolve_attachment_path_outside_trusted_root_rejected(self) -> None:
+        """Sec-M4: an absolute path outside the trusted Attachments root
+        is now rejected (returns None). Previously it was accepted, which
+        let a tampered chat.db drive arbitrary file reads."""
+        # /var/mobile is not inside ~/Library/Messages/Attachments/
         result = _resolve_attachment_path("/var/mobile/Media/photo.jpg")
-        assert result == Path("/var/mobile/Media/photo.jpg")
+        assert result is None
 
-    def test_resolve_attachment_path_relative(self) -> None:
-        """Relative filename — exercises line 375 fallback."""
+    def test_resolve_attachment_path_outside_messages_dir_rejected(self) -> None:
+        """A relative path that resolves outside the trusted root is rejected."""
         result = _resolve_attachment_path("relative/photo.jpg")
-        assert result == Path.home() / "Library" / "Messages" / "relative/photo.jpg"
+        # The fallback synthesises ~/Library/Messages/relative/photo.jpg
+        # which is NOT inside ~/Library/Messages/Attachments/.
+        assert result is None
+
+    def test_resolve_attachment_path_under_attachments_root_accepted(self) -> None:
+        """A path under Attachments/ is accepted and resolved."""
+        path = "~/Library/Messages/Attachments/00/00/photo.png"
+        result = _resolve_attachment_path(path)
+        assert result is not None
+        assert str(result).startswith(str(Path.home() / "Library" / "Messages" / "Attachments"))
 
     def test_row_to_attachment_exception_caught(self) -> None:
         """_resolve_attachment_path raising is caught silently — exercises lines 356-357."""

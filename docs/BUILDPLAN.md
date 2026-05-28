@@ -207,11 +207,11 @@ Two archives merge cleanly because:
 ## 6. iCloud Sync Model
 
 ### Container
-Custom iCloud container: `iCloud.org.imessagearchiver`
+Custom iCloud container: `iCloud.com.slw.imessage-archiver`
 
 Both apps use matching container ID:
-- Mac app: `~/Library/Mobile Documents/iCloud~org~imessagearchiver/Documents/`
-- iOS app: `FileManager.url(forUbiquityContainerIdentifier: "iCloud.org.imessagearchiver")`
+- Mac app: `~/Library/Mobile Documents/iCloud~com~slw~imessage-archiver/Documents/`
+- iOS app: `FileManager.url(forUbiquityContainerIdentifier: "iCloud.com.slw.imessage-archiver")`
 
 ### Write/read pattern
 - **Single writer:** Mac app only
@@ -303,7 +303,7 @@ ImessageArchiverIOS/
 ### iCloud setup
 - Apple Developer account required
 - Enable iCloud capability in Xcode
-- Custom container: `iCloud.org.imessagearchiver`
+- Custom container: `iCloud.com.slw.imessage-archiver`
 - Entitlement: `com.apple.developer.icloud-container-identifiers`
 
 ### On-launch flow
@@ -487,7 +487,7 @@ Mac archive → bundle → iOS reader (CI on iOS simulator) → assert:
 ### Phase 5 — iOS reader app
 - **Pause point: human-in-the-loop required for Xcode/iCloud container setup, Apple Developer account, signing certs**
 - SwiftUI project scaffold
-- iCloud container configured (matching `iCloud.org.imessagearchiver`)
+- iCloud container configured (matching `iCloud.com.slw.imessage-archiver`)
 - GRDB integration, archive.sqlite read-only access
 - Seek-based tar reader
 - ChatListView, ThreadView, MessageBubbleView

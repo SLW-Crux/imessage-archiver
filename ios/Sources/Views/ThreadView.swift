@@ -7,8 +7,10 @@ struct ThreadView: View {
     @State private var messages: [Message] = []
     @State private var isLoading = true
     @State private var hasMore = false
+    @State private var loadError: String?
     @State private var attachmentCache = AttachmentCache()
     @State private var tarReader: TarReader?
+    @State private var loadTask: Task<Void, Never>?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -51,18 +53,40 @@ struct ThreadView: View {
         .navigationTitle(chat.title)
         .navigationBarTitleDisplayMode(.inline)
         .overlay {
-            if isLoading { ProgressView() }
+            if isLoading {
+                ProgressView()
+            } else if let err = loadError, messages.isEmpty {
+                ContentUnavailableView(
+                    "Couldn't load messages",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(err)
+                )
+            }
         }
+        .onDisappear { loadTask?.cancel() }
     }
 
     private func loadInitial() async {
         isLoading = true
+        loadError = nil
         do {
+            try Task.checkCancellation()
             let loaded = try await reader.messages(in: chat.chatGuid, limit: 200)
+            try Task.checkCancellation()
             messages = loaded
             hasMore = loaded.count == 200
-            tarReader = try? TarReader(bundleURL: reader.bundleURL)
-        } catch { }
+            // attachments.tar may not yet be downloaded; non-fatal.
+            do {
+                tarReader = try TarReader(bundleURL: reader.bundleURL)
+            } catch {
+                tarReader = nil
+                // Don't surface — attachments are non-essential for thread browsing.
+            }
+        } catch is CancellationError {
+            // User backed out mid-load; nothing to show.
+        } catch {
+            loadError = error.localizedDescription
+        }
         isLoading = false
     }
 
@@ -72,7 +96,11 @@ struct ThreadView: View {
             let earlier = try await reader.messages(in: chat.chatGuid, limit: 200, before: oldest.timestamp)
             messages = earlier + messages
             hasMore = earlier.count == 200
-        } catch { }
+        } catch is CancellationError {
+            // ignore
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 
     private func shouldShowDateSeparator(message: Message, previous: Message?) -> Bool {

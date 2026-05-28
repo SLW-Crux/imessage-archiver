@@ -49,8 +49,15 @@ struct Reaction: Hashable, Sendable, Codable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         from = try c.decode(String.self, forKey: .from)
         type = try c.decode(String.self, forKey: .type)
-        if let ts = try c.decodeIfPresent(Double.self, forKey: .timestamp) {
-            timestamp = Date(timeIntervalSince1970: ts)
+        // The Mac archiver writes timestamp as a Unix-epoch number, but
+        // earlier sketches considered ISO strings. Accept either, so
+        // reactions survive a format drift instead of silently dropping
+        // every message's reactions (H-8 from review).
+        if let ts = try? c.decodeIfPresent(Double.self, forKey: .timestamp) {
+            timestamp = ts.map { Date(timeIntervalSince1970: $0) }
+        } else if let str = try? c.decodeIfPresent(String.self, forKey: .timestamp), let str {
+            let iso = ISO8601DateFormatter()
+            timestamp = iso.date(from: str)
         } else {
             timestamp = nil
         }

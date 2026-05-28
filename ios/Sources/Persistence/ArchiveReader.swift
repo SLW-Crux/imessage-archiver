@@ -1,14 +1,37 @@
 import Foundation
 import GRDB
 
+enum ArchiveReaderError: Error, LocalizedError {
+    case schemaTooNew(found: Int, max: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .schemaTooNew(let found, let max):
+            return "Archive schema version \(found) is newer than this app supports (\(max)). Update the iOS reader."
+        }
+    }
+}
+
 final class ArchiveReader: Sendable {
+    /// Maximum bundle schema version this reader understands. Per
+    /// docs/SCHEMA.md the iOS reader must refuse to open a newer bundle
+    /// rather than silently mis-render unknown columns as nil.
+    static let maxSupportedSchemaVersion = 1
+
     private let dbPool: DatabasePool
     let manifest: ArchiveManifest
     let bundleURL: URL
 
     init(bundleURL: URL) throws {
         self.bundleURL = bundleURL
-        self.manifest = try ArchiveManifest.load(bundleURL: bundleURL)
+        let manifest = try ArchiveManifest.load(bundleURL: bundleURL)
+        if manifest.schemaVersion > Self.maxSupportedSchemaVersion {
+            throw ArchiveReaderError.schemaTooNew(
+                found: manifest.schemaVersion,
+                max: Self.maxSupportedSchemaVersion
+            )
+        }
+        self.manifest = manifest
 
         let sqliteURL = bundleURL.appendingPathComponent("archive.sqlite")
         var config = Configuration()
@@ -67,25 +90,27 @@ final class ArchiveReader: Sendable {
     }
 
     func search(query: String, limit: Int = 100) async throws -> [SearchHit] {
-        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        let sanitised = Self.sanitiseFTS5Query(query)
+        guard !sanitised.isEmpty else { return [] }
         return try await dbPool.read { db in
             // SQLite FTS5 snippet(table, col, before, after, ellipsis, tokens):
-            // col -1 = all FTS-indexed columns. The markers are unique strings
-            // we strip on the client side to highlight matches in SwiftUI.
+            // col -1 = all FTS-indexed columns. Markers are Private Use Area
+            // codepoints (U+E000/U+E001) which are guaranteed not to appear
+            // in valid Unicode text, avoiding FSI/PDI collisions in RTL text.
             let rows = try Row.fetchAll(db, sql: """
                 SELECT m.message_guid, m.chat_guid, m.sender_handle, m.sender_name,
                        m.timestamp, m.text, m.is_from_me, m.reply_to_guid,
                        m.reactions_json, m.has_attachments, m.date_edited, m.date_retracted,
                        snippet(messages_fts, -1,
-                               '\u{2068}MATCH_START\u{2069}',
-                               '\u{2068}MATCH_END\u{2069}',
+                               '\u{E000}',
+                               '\u{E001}',
                                '…', 16) AS snippet
                 FROM messages_fts
                 JOIN messages m ON m.message_guid = messages_fts.message_guid
                 WHERE messages_fts MATCH ?
                 ORDER BY rank
                 LIMIT ?
-                """, arguments: [query, limit])
+                """, arguments: [sanitised, limit])
             return rows.map { row in
                 SearchHit(
                     message: Self.messageFromRow(row),
@@ -93,6 +118,25 @@ final class ArchiveReader: Sendable {
                 )
             }
         }
+    }
+
+    /// Convert raw user input into a valid FTS5 MATCH expression.
+    ///
+    /// FTS5 has its own mini-language: `"`, `*`, `:`, `(`, `)`, `-`, `+`,
+    /// `OR`, `AND`, `NOT`, `NEAR` are syntactically significant. A user
+    /// typing `the matrix (1999)` would throw "fts5: syntax error near (".
+    /// To avoid that, wrap each whitespace-separated token in double
+    /// quotes (escaping any internal `"`), joined with spaces (implicit AND).
+    static func sanitiseFTS5Query(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return "" }
+        let tokens = trimmed.split(whereSeparator: { $0.isWhitespace })
+        let quoted: [String] = tokens.compactMap { tok in
+            // Strip any character that would break out of the quoted phrase.
+            let cleaned = tok.replacingOccurrences(of: "\"", with: "")
+            return cleaned.isEmpty ? nil : "\"\(cleaned)\""
+        }
+        return quoted.joined(separator: " ")
     }
 
     // MARK: - Row mappers

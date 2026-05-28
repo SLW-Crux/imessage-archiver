@@ -42,6 +42,25 @@ imessage-archiver info             # show manifest info
 imessage-archiver setup            # Full Disk Access walkthrough
 ```
 
+## iOS reader
+
+SwiftUI app that opens the `.imarchive` bundle from iCloud Drive.
+
+```bash
+# Generate the test fixture (one time, after the Python CLI works)
+./ios/Tests/Fixtures/generate_fixture.sh
+
+# Generate / regenerate the Xcode project
+cd ios && xcodegen generate
+
+# Open in Xcode
+open ios/iMessageArchiver.xcodeproj
+```
+
+Bundle ID `com.slw.imessage-archiver`, iCloud container
+`iCloud.com.slw.imessage-archiver` (auto-created on first signed build with
+`-allowProvisioningUpdates`). Requires iOS 17+, Swift 6, Xcode 26.
+
 ## License
 
 MIT

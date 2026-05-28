@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Regenerate the Xcode project and restore the entitlements file.
+# xcodegen blanks our entitlements file on every run (it only declares the
+# entitlements *path* in the project, not the content), so we own the
+# canonical content here.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+xcodegen generate
+
+cat > iMessageArchiver.entitlements <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.icloud-container-identifiers</key>
+    <array>
+        <string>iCloud.com.slw.imessage-archiver</string>
+    </array>
+    <key>com.apple.developer.icloud-services</key>
+    <array>
+        <string>CloudDocuments</string>
+    </array>
+    <key>com.apple.developer.ubiquity-container-identifiers</key>
+    <array>
+        <string>iCloud.com.slw.imessage-archiver</string>
+    </array>
+</dict>
+</plist>
+EOF
+
+echo "==> Entitlements restored: iMessageArchiver.entitlements"

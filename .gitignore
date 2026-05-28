@@ -37,3 +37,6 @@ ios/*.xcodeproj/xcuserdata/
 ios/*.xcodeproj/project.xcworkspace/xcuserdata/
 ios/*.xcworkspace/xcuserdata/
 ios/DerivedData/
+
+# iOS test fixture bundle — regenerated locally via Tests/Fixtures/generate_fixture.sh
+ios/Tests/Fixtures/*.imarchive/

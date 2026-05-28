@@ -21,9 +21,15 @@ from imessage_archiver import __version__
 from imessage_archiver.core.attachments import AttachmentState, classify, sha256_file
 from imessage_archiver.core.tar_writer import TarWriter
 from imessage_archiver.db.reader import AttachmentRow, ChatRow, MessageRow, Reader
-from imessage_archiver.db.schema import TAPBACK_TYPE_NAMES, tapback_base_type
+from imessage_archiver.db.schema import TAPBACK_TYPE_NAMES, is_tapback, tapback_base_type
+from imessage_archiver.util import atomic_write_text, iso_now
 
-_SCHEMA_VERSION = 1
+# The frozen-contract schema version. Per docs/SCHEMA.md, both Mac archiver
+# and iOS reader refuse to open bundles whose schema version exceeds the
+# value they were compiled with. Bump only when adding additive migrations.
+SCHEMA_VERSION = 1
+MAX_SUPPORTED_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = SCHEMA_VERSION  # backwards-compat alias for the existing module
 _DDL = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
@@ -100,6 +106,10 @@ CREATE INDEX IF NOT EXISTS idx_messages_chat      ON messages(chat_guid, timesta
 CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
 CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments(message_guid);
 """
+
+
+class SchemaVersionError(Exception):
+    """Raised when a bundle's schema version is newer than this archiver supports."""
 
 
 class ArchiveWriter:
@@ -206,6 +216,17 @@ class ArchiveWriter:
             conn = sqlite3.connect(str(self._sqlite_path))
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA foreign_keys=ON")
+        else:
+            # Existing bundle — refuse to open if it's newer than we understand.
+            row = conn.execute("SELECT MAX(version) FROM schema_migrations").fetchone()
+            existing_version = row[0] if row and row[0] is not None else 0
+            if existing_version > MAX_SUPPORTED_SCHEMA_VERSION:
+                conn.close()
+                raise SchemaVersionError(
+                    f"Bundle schema version {existing_version} is newer than this "
+                    f"archiver supports ({MAX_SUPPORTED_SCHEMA_VERSION}). "
+                    f"Upgrade imessage-archiver to read this bundle."
+                )
 
         self._conn = conn
 
@@ -344,13 +365,20 @@ class ArchiveWriter:
         return _AttStats(written=cur.rowcount > 0, state=state)
 
     def _rebuild_reactions(self) -> None:
-        """Denormalise tapback messages into their target message's reactions_json."""
+        """Denormalise tapback messages into their target message's reactions_json.
+
+        Filters with ``is_tapback`` so non-tapback "associated message" types
+        (stickers / expressive sends — any ``associated_message_type != 0``
+        outside the 2000–3005 range) do not pollute the reactions array.
+        """
         assert self._conn
+        from imessage_archiver.db.schema import tapback_is_remove
+
         tapbacks = self._conn.execute(
             """SELECT associated_message_guid, associated_message_type,
                       sender_name, sender_handle, timestamp
                FROM messages
-               WHERE associated_message_type > 0
+               WHERE associated_message_type BETWEEN 2000 AND 3005
                ORDER BY timestamp""",
         ).fetchall()
 
@@ -359,12 +387,14 @@ class ArchiveWriter:
         for target_guid, msg_type, sender_name, sender_handle, ts in tapbacks:
             if not target_guid:
                 continue
+            if not is_tapback(msg_type):
+                # Belt-and-braces — the SQL WHERE already filtered, but the
+                # helper is the canonical source of truth.
+                continue
             reactions.setdefault(target_guid, [])
             base = tapback_base_type(msg_type)
             from_name = sender_name or sender_handle or "Unknown"
             type_name = TAPBACK_TYPE_NAMES.get(base, "unknown")
-
-            from imessage_archiver.db.schema import tapback_is_remove
 
             if tapback_is_remove(msg_type):
                 # Remove any existing reaction from this sender of this type
@@ -403,7 +433,7 @@ class ArchiveWriter:
             except Exception:
                 pass
 
-        now = _iso_now()
+        now = iso_now()
         tar_size = self._tar_path.stat().st_size if self._tar_path.exists() else 0
 
         manifest = {
@@ -420,9 +450,7 @@ class ArchiveWriter:
             "archive_size_bytes": tar_size,
         }
 
-        tmp = self._manifest_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(manifest, indent=2))
-        tmp.replace(self._manifest_path)
+        atomic_write_text(self._manifest_path, json.dumps(manifest, indent=2))
 
     def _count(self, table: str) -> int:
         assert self._conn
@@ -460,12 +488,6 @@ class _AttStats:
 # ------------------------------------------------------------------
 
 ProgressCallback = Callable[[ChatRow, RunStats], None]
-
-
-def _iso_now() -> str:
-    import datetime
-
-    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _macos_version() -> str:

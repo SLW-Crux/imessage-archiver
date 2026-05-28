@@ -8,6 +8,7 @@ file-data byte (header_start + 512) and *length* is the raw file size
 
 from __future__ import annotations
 
+import os
 import tarfile
 from pathlib import Path
 
@@ -69,8 +70,21 @@ class TarWriter:
 
         with source_path.open("rb") as fh:
             self._tar.addfile(info, fh)
-        if self._tar.fileobj is not None and hasattr(self._tar.fileobj, "flush"):
-            self._tar.fileobj.flush()
+        # Flush Python buffers AND fsync the OS page cache before returning.
+        # Without fsync, a SIGKILL between this append and the SQLite commit
+        # that records (tar_offset, tar_length) would leave the SQLite row
+        # pointing at bytes that are still in the page cache and never on disk.
+        fileobj = self._tar.fileobj
+        if fileobj is not None and hasattr(fileobj, "flush"):
+            fileobj.flush()
+            fileno = getattr(fileobj, "fileno", None)
+            if callable(fileno):
+                try:
+                    os.fsync(fileno())
+                except OSError:
+                    # Some filesystems / fileobj wrappers don't support fsync.
+                    # Durability is best-effort on those paths.
+                    pass
 
         tar_offset = header_start + _HEADER_SIZE
         return tar_offset, file_size

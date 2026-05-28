@@ -7,6 +7,7 @@ struct AttachmentGridView: View {
     let tarReader: TarReader?
 
     @State private var previewURL: URL?
+    @State private var previewGuid: String?
 
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 4) {
@@ -23,11 +24,28 @@ struct AttachmentGridView: View {
         }
         .padding(.horizontal, 8)
         .quickLookPreview($previewURL)
+        .onChange(of: previewURL) { _, newValue in
+            // When the preview dismisses (newValue == nil), unpin so the
+            // cache can evict the file if needed.
+            if newValue == nil, let guid = previewGuid {
+                cache.unpin(guid)
+                previewGuid = nil
+            }
+        }
     }
 
     private func tap(_ attachment: Attachment) async {
         guard attachment.isExtractable, let tarReader else { return }
-        previewURL = try? await cache.url(for: attachment, tarReader: tarReader)
+        // Pin BEFORE extracting so the cache can't evict the file while
+        // QuickLook is still presenting it.
+        cache.pin(attachment.attachmentGuid)
+        previewGuid = attachment.attachmentGuid
+        do {
+            previewURL = try await cache.url(for: attachment, tarReader: tarReader)
+        } catch {
+            cache.unpin(attachment.attachmentGuid)
+            previewGuid = nil
+        }
     }
 }
 

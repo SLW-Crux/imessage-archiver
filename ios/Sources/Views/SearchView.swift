@@ -3,65 +3,77 @@ import SwiftUI
 struct SearchView: View {
     let reader: ArchiveReader
     @State private var query = ""
-    @State private var results: [Message] = []
+    @State private var hits: [SearchHit] = []
     @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
-        NavigationStack {
-            List(results) { message in
-                NavigationLink(value: message) {
-                    SearchResultRow(message: message)
-                }
+        List(hits) { hit in
+            SearchResultRow(hit: hit)
+        }
+        .listStyle(.plain)
+        .overlay {
+            if query.isEmpty {
+                ContentUnavailableView(
+                    "Search Messages",
+                    systemImage: "magnifyingglass",
+                    description: Text("Search across all conversations in your archive.")
+                )
+            } else if hits.isEmpty && !isSearching {
+                ContentUnavailableView.search(text: query)
             }
-            .listStyle(.plain)
-            .overlay {
-                if query.isEmpty {
-                    ContentUnavailableView("Search Messages",
-                        systemImage: "magnifyingglass",
-                        description: Text("Search across all conversations in your archive."))
-                } else if results.isEmpty && !isSearching {
-                    ContentUnavailableView.search(text: query)
-                }
-            }
-            .navigationTitle("Search")
-            .searchable(text: $query, prompt: "Search messages")
-            .onChange(of: query) { _, newValue in
-                Task { await search(newValue) }
-            }
+        }
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, prompt: "Search messages")
+        .onChange(of: query) { _, newValue in
+            searchTask?.cancel()
+            searchTask = Task { await debouncedSearch(newValue) }
         }
     }
 
-    private func search(_ q: String) async {
+    private func debouncedSearch(_ q: String) async {
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
         guard !q.trimmingCharacters(in: .whitespaces).isEmpty else {
-            results = []
+            await MainActor.run { hits = [] }
             return
         }
-        isSearching = true
-        results = (try? await reader.search(query: q)) ?? []
-        isSearching = false
+        await MainActor.run { isSearching = true }
+        let results = (try? await reader.search(query: q)) ?? []
+        await MainActor.run {
+            hits = results
+            isSearching = false
+        }
     }
 }
 
 struct SearchResultRow: View {
-    let message: Message
+    let hit: SearchHit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(message.isFromMe ? "Me" : message.displaySender)
+                Text(hit.message.isFromMe ? "Me" : hit.message.displaySender)
                     .font(.caption.weight(.semibold))
                 Spacer()
-                Text(message.timestamp, style: .date)
+                Text(hit.message.timestamp, style: .date)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            if let text = message.text {
-                Text(text)
-                    .font(.body)
-                    .lineLimit(2)
-                    .foregroundStyle(.primary)
-            }
+            Text(hit.highlightedAttributedString())
+                .font(.body)
+                .lineLimit(3)
         }
         .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(hit.message.displaySender), \(hit.snippet.removingFTSMarkers())")
+    }
+}
+
+private extension String {
+    func removingFTSMarkers() -> String {
+        replacingOccurrences(of: "\u{2068}MATCH_START\u{2069}", with: "")
+            .replacingOccurrences(of: "\u{2068}MATCH_END\u{2069}", with: "")
     }
 }

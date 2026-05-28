@@ -66,20 +66,32 @@ final class ArchiveReader: Sendable {
         }
     }
 
-    func search(query: String, limit: Int = 100) async throws -> [Message] {
+    func search(query: String, limit: Int = 100) async throws -> [SearchHit] {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
         return try await dbPool.read { db in
+            // SQLite FTS5 snippet(table, col, before, after, ellipsis, tokens):
+            // col -1 = all FTS-indexed columns. The markers are unique strings
+            // we strip on the client side to highlight matches in SwiftUI.
             let rows = try Row.fetchAll(db, sql: """
                 SELECT m.message_guid, m.chat_guid, m.sender_handle, m.sender_name,
                        m.timestamp, m.text, m.is_from_me, m.reply_to_guid,
-                       m.reactions_json, m.has_attachments, m.date_edited, m.date_retracted
+                       m.reactions_json, m.has_attachments, m.date_edited, m.date_retracted,
+                       snippet(messages_fts, -1,
+                               '\u{2068}MATCH_START\u{2069}',
+                               '\u{2068}MATCH_END\u{2069}',
+                               '…', 16) AS snippet
                 FROM messages_fts
                 JOIN messages m ON m.message_guid = messages_fts.message_guid
                 WHERE messages_fts MATCH ?
                 ORDER BY rank
                 LIMIT ?
                 """, arguments: [query, limit])
-            return rows.map(Self.messageFromRow)
+            return rows.map { row in
+                SearchHit(
+                    message: Self.messageFromRow(row),
+                    snippet: row["snippet"] as? String ?? ""
+                )
+            }
         }
     }
 

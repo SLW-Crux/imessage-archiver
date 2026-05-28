@@ -8,8 +8,9 @@ from unittest.mock import patch
 
 import pytest
 
-from imessage_archiver.core.archive import ArchiveWriter, _iso_now, _macos_version
+from imessage_archiver.core.archive import ArchiveWriter, _macos_version
 from imessage_archiver.db.reader import Reader
+from imessage_archiver.util import iso_now as _iso_now
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 

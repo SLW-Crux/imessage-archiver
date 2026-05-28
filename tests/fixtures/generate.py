@@ -12,7 +12,6 @@ from __future__ import annotations
 import plistlib
 import random
 import sqlite3
-import time
 from pathlib import Path
 
 FIXTURES_DIR = Path(__file__).parent
@@ -21,6 +20,13 @@ ATTACHMENTS_DIR.mkdir(exist_ok=True)
 
 # Apple epoch: seconds since 2001-01-01 00:00:00 UTC
 APPLE_EPOCH_OFFSET = 978307200
+
+# Fixed base epoch for deterministic fixture timestamps. Using
+# ``time.time()`` here means regenerating fixtures on different days
+# produces different bytes for the same logical content, which prevents
+# byte-equality assertions and makes diffs noisy. Pin to a stable date.
+# 2025-01-01 00:00:00 UTC.
+_DETERMINISTIC_BASE_EPOCH = 1735689600
 # Use nanoseconds for Sonoma+ style timestamps
 NS_OFFSET = APPLE_EPOCH_OFFSET * 1_000_000_000
 
@@ -496,7 +502,7 @@ def build_tiny(path: Path) -> None:
     c1 = insert_chat(conn, make_guid("chat", 1), "+14155550101", "iMessage", None, None, [h1])
     c2 = insert_chat(conn, make_guid("chat", 2), "+14155550102", "iMessage", None, None, [h2])
 
-    base = time.time() - 86400
+    base = _DETERMINISTIC_BASE_EPOCH - 86400
     msg_rowids: list[int] = []
     msg_guids: list[str] = []
     for i in range(8):
@@ -555,7 +561,7 @@ def build_medium(path: Path) -> None:
         cr = insert_chat(conn, cg, h_id, h_svc, name, room, participants)
         chat_rowids.append(cr)
 
-    base = time.time() - 365 * 86400
+    base = _DETERMINISTIC_BASE_EPOCH - 365 * 86400
     att_count = 0
     for msg_i in range(5000):
         g = make_guid("msg", msg_i + 1)
@@ -611,7 +617,7 @@ def build_large(path: Path) -> None:
         cr = insert_chat(conn, cg, h_id, h_svc, name, room, participants)
         chat_rowids.append(cr)
 
-    base = time.time() - 3 * 365 * 86400
+    base = _DETERMINISTIC_BASE_EPOCH - 3 * 365 * 86400
     att_count = 0
     for msg_i in range(50_000):
         g = make_guid("msg", 100_000 + msg_i)
@@ -662,7 +668,7 @@ def build_edge(path: Path) -> None:
     # Email handle chat
     c_email = insert_chat(conn, make_guid("chat", 3), "alice@example.com", "iMessage", None, None, [h_email])
 
-    base = time.time() - 7 * 86400
+    base = _DETERMINISTIC_BASE_EPOCH - 7 * 86400
     msg_n = [0]
 
     def next_msg_guid() -> str:
@@ -798,7 +804,7 @@ def build_schema_variant(path: Path, variant: str, extra_messages: int = 200) ->
     c1 = insert_chat(conn, make_guid("chat", 1), "+14155550101", "iMessage", None, None, [h1])
 
     rng = random.Random(variant)
-    base = time.time() - 30 * 86400
+    base = _DETERMINISTIC_BASE_EPOCH - 30 * 86400
     for i in range(extra_messages):
         g = make_guid("msg", i + 1)
         t = unix_to_apple_ns(base + i * 120 + rng.uniform(-60, 60))

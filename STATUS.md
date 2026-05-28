@@ -1,27 +1,35 @@
 # Status
 
 ## Current phase
-Phase 7 — hardening (complete; v1.0.0 paused on human-in-the-loop gate)
+Post-review remediation complete. Awaiting Layer-7 manual sign-off for v1.0.0.
 
 ## Completed
-- Phase 0: foundations, tag v0.0.1-foundations
-- Phase 1: db/ package, 100% coverage, tag v0.1.0-db-reader
-- Phase 2: core/ package, 100% coverage, tag v0.2.0-archive-writer
-- Phase 3: cli/commands.py, tag v0.3.0-cli
-- Phase 4: PySide6 GUI + PyInstaller arm64 packaging, tag v0.4.0-gui
-- Phase 5a: iOS SwiftUI reader skeleton, tag v0.5.0-ios-skeleton
-- Phase 5b: Team ID correction, bundle refresh detection, iOS CI, tag v0.5.1-ios-polish
-- Phase 5c-f: FTS5 snippet highlighting, debounced search, test fixture, tag v0.5.2-ios-search
-- Phase 6: yearly workflow polish (Feb 29 fix, 10am default, better copy), tag v0.6.0-yearly-workflow
-- Phase 7: hardening — large-DB stress test (50K msgs <60s), cross-version schema coverage (ventura/sonoma/sequoia), incremental idempotence at scale; 188 tests passing
+- Phase 0–4: Foundations, DB reader, archive writer, CLI, PySide6 GUI
+- Phase 5a–5cf: iOS SwiftUI skeleton + search/polish
+- Phase 6: yearly workflow polish (Feb-29 fix, 10am default)
+- Phase 7: hardening — 50K-message stress, cross-version schema, incremental at scale
 
-## In progress
-- (none — Phase 7 work landed, v1.0.0 awaiting human gate)
+## Post-review remediation (PR #12–#18)
+Resolves 6 Critical + 14 High + ~18 Medium findings from a 4-agent code review:
 
-## Blocked / Human gates
-- **v1.0.0 release**: requires Layer 7 manual checklist sign-off per CLAUDE.md
-- **Phase 5g (TestFlight)**: requires interactive Apple ID auth; cable install via Xcode is the easier alternative for now
+- **PR #12** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/12)): align Mac archiver destination with iOS ubiquity container (the two halves can now actually see each other); doc bundle-ID drift fix; .gitignore cleanup
+- **PR #13** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/13)): schema-version refusal + atomic writes (write→fsync→rename→fsync-parent) + lock O_EXCL atomicity + tapback filter
+- **PR #14** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/14)): GUI now reads from a snapshot (was opening live chat.db with immutable=1 — direct CLAUDE.md violation); worker race fixes (last-write-wins, closeEvent cleanup); pytest-qt + pytest-timeout
+- **PR #15** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/15)): iOS AttachmentCache path-traversal sanitisation + containment check; pin/unpin to protect QuickLook URL; TarReader bounds checks + short-read loop; JSON index sidecar
+- **PR #16** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/16)): iOS schema-version refusal; Reaction decoder accepts both Double + String timestamps; FTS5 query sanitisation; PUA sentinels (no FSI/PDI collisions); manifest-load failure path; event-token ordering
+- **PR #17** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/17)): attachment-path containment to ~/Library/Messages/Attachments/; attributed_body 2 MiB size cap; FDA detection distinguishes ENOENT from EACCES; subprocess returncode check
+- **PR #18** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/18)): CLI failure-path coverage; CI destructive-SQL grep self-test; real FTS5 content tests; deterministic fixture timestamps
 
-## Next
-- Manual Layer 7 walkthrough on real chat.db (Layer 7 checklist in TEST_PLAN.md)
-- Sign-off and tag v1.0.0 — needs human confirmation
+## Test totals
+- **225 tests pass** (was 188 before remediation; +37 net) in 14.4s
+- ruff, black, mypy all clean
+- 21 Swift files parse-clean (`swiftc -parse`)
+
+## Remaining — human gates only
+1. **Layer 7 manual checklist** — run archiver against your real chat.db, eyeball fidelity in Mac GUI + iOS app per docs/TEST_PLAN.md. Required per CLAUDE.md before `v1.0.0`.
+2. **Tag `v1.0.0`** — once Layer 7 signed off.
+3. **(Optional) Phase 5g TestFlight** — only if distributing to others.
+
+## Notes
+- `/code-review ultra` would be a useful second pass before v1.0.0 (more thorough than my 4-agent parallel review; user-billed/user-triggered).
+- iOS CI workflow expects an iOS Simulator runtime — you may need to install it via Xcode → Settings → Components if not already present.

@@ -42,6 +42,9 @@ jobs:
   test:
     name: Tests (Layers 1–4)
     runs-on: macos-14
+    # Hard cap so a hung Qt test can never burn the 6-hour default again.
+    # Local suite runs in 15s; 15min is generous for slow runner conditions.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6

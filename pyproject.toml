@@ -73,7 +73,11 @@ testpaths = ["tests"]
 # Apply a 60-second per-test timeout so a hung Qt test (or a deadlocked
 # QThread) does not stall CI indefinitely. Individual slow tests can
 # override with @pytest.mark.timeout(N).
-addopts = "-v --cov=imessage_archiver --cov-report=term-missing --timeout=60"
+# timeout_method = "thread": SIGALRM-based timeouts don't fire inside Qt
+# event loops (Qt installs its own signal handlers), so use a thread-based
+# watchdog that can kill a hung Qt test. This is the standard pytest-qt
+# remediation for the 6-hour CI hang we hit on macos-14.
+addopts = "-v --cov=imessage_archiver --cov-report=term-missing --timeout=60 --timeout-method=thread"
 qt_api = "pyside6"
 
 [tool.coverage.run]

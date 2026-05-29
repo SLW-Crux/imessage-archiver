@@ -15,16 +15,32 @@ _CNContactStore: object | None = None
 
 
 def _init_contacts() -> bool:
-    """Attempt to import PyObjC Contacts bindings. Cache the result."""
+    """Attempt to import PyObjC Contacts bindings AND check authorization.
+
+    Returns True only if (a) the PyObjC framework is importable AND
+    (b) the process has been granted Contacts access by the user. On a
+    CI runner with no GUI session, status is typically `notDetermined`
+    and any actual CNContactStore query would hang forever waiting for
+    a user-permission prompt that never comes — so we bail out here.
+    """
     global _contacts_available, _CNContactStore
     if _contacts_available is not None:
         return _contacts_available
     try:
         import Contacts
 
+        # CNAuthorizationStatusAuthorized = 3
+        # notDetermined = 0, restricted = 1, denied = 2
+        entity_type_contacts = 0
+        status = Contacts.CNContactStore.authorizationStatusForEntityType_(entity_type_contacts)
+        if status != 3:
+            _contacts_available = False
+            return False
         _CNContactStore = Contacts.CNContactStore
         _contacts_available = True
-    except ImportError:
+    except (ImportError, AttributeError, Exception):
+        # AttributeError on stripped frameworks; broad Exception because
+        # PyObjC can raise OSError on some misconfigured runners.
         _contacts_available = False
     return _contacts_available
 

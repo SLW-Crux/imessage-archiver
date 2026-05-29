@@ -83,4 +83,6 @@ jobs:
       - name: Generate fixtures
         run: source .venv/bin/activate && python tests/fixtures/generate.py
       - name: Run corruption tests
-        run: source .venv/bin/activate && pytest tests/unit/test_corruption.py -v
+        # PR #13 created tests/integration/test_corruption_resistance.py — the
+        # old workflow pointed at a never-created tests/unit/test_corruption.py.
+        run: source .venv/bin/activate && pytest tests/integration/test_corruption_resistance.py -v

@@ -86,7 +86,16 @@ class TarWriter:
                     # Durability is best-effort on those paths.
                     pass
 
-        tar_offset = header_start + _HEADER_SIZE
+        # Compute the real data offset by working backward from the post-
+        # write position. For entries with names <= 100 chars (POSIX ustar
+        # limit) this equals header_start + 512. For LONGER names, Python's
+        # tarfile prepends PAX/GNU extended headers (one or more extra
+        # 512-byte header blocks + 512-byte data blocks per extension),
+        # making header_start + 512 wrong. Subtracting the padded data
+        # length from the end position is correct in BOTH cases.
+        end_position = fileobj.tell() if fileobj is not None else (header_start + _HEADER_SIZE + file_size)
+        padded = ((file_size + _BLOCK_SIZE - 1) // _BLOCK_SIZE) * _BLOCK_SIZE
+        tar_offset = end_position - padded
         return tar_offset, file_size
 
     # ------------------------------------------------------------------

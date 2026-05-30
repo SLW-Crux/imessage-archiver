@@ -124,11 +124,24 @@ struct ThreadView: View {
             try Task.checkCancellation()
             messages = loaded
             hasMore = loaded.count == 200
-            availableYears = (try? await reader.years(in: chat.chatGuid)) ?? []
+
+            // Open the tar reader BEFORE the years query so attachment
+            // thumbnails can start loading immediately. The previous
+            // ordering let a slow years() block tarReader for seconds
+            // on large chats, leaving every attachment stuck loading.
             do {
                 tarReader = try TarReader(bundleURL: reader.bundleURL)
             } catch {
                 tarReader = nil
+            }
+
+            // Year picker is a nice-to-have — load it in a detached
+            // task so it never blocks the visible thread / attachments.
+            let chatGuid = chat.chatGuid
+            let reader = reader
+            Task { @MainActor in
+                let years = (try? await reader.years(in: chatGuid)) ?? []
+                availableYears = years
             }
         } catch is CancellationError {
         } catch {

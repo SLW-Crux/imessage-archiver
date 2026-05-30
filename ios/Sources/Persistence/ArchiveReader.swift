@@ -217,16 +217,39 @@ final class ArchiveReader: Sendable {
         }
     }
 
-    /// Distinct calendar years that contain messages in this chat,
-    /// newest year first. Powers the year-picker menu.
+    /// Calendar years that span this chat's message range, newest year
+    /// first. Powers the year-picker menu.
+    ///
+    /// Implementation note: the previous version ran
+    /// `SELECT DISTINCT strftime('%Y', timestamp)` over every message in
+    /// the chat — strftime per row + DISTINCT + ORDER BY, on chats with
+    /// 100k+ messages, took long enough to delay `tarReader` init in
+    /// ThreadView's loadInitial(), which in turn left every attachment
+    /// stuck in `.loading` until the year query came back. Now we ask
+    /// for MIN and MAX timestamps in a single aggregate (sub-millisecond
+    /// with an index) and expand the year range in Swift.
+    ///
+    /// Trade-off: gives a contiguous range, so a chat with messages in
+    /// 2018 and 2024 but a gap in 2020 will list 2020 even though there
+    /// are no messages in it. The year-picker query for 2020 will
+    /// simply return the next available year's messages, so the UX is
+    /// still correct.
     func years(in chatGuid: String) async throws -> [Int] {
         try await dbQueue.read { db in
-            try Int.fetchAll(db, sql: """
-                SELECT DISTINCT CAST(strftime('%Y', timestamp, 'unixepoch') AS INTEGER) AS year
+            let row = try Row.fetchOne(db, sql: """
+                SELECT MIN(timestamp) AS lo, MAX(timestamp) AS hi
                 FROM messages
                 WHERE chat_guid = ?
-                ORDER BY year DESC
                 """, arguments: [chatGuid])
+            guard let row,
+                  let lo = row["lo"] as? Int64,
+                  let hi = row["hi"] as? Int64 else {
+                return []
+            }
+            let cal = Calendar.current
+            let loYear = cal.component(.year, from: Date(timeIntervalSince1970: Double(lo)))
+            let hiYear = cal.component(.year, from: Date(timeIntervalSince1970: Double(hi)))
+            return Array((loYear...hiYear).reversed())
         }
     }
 

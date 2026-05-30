@@ -134,6 +134,25 @@ def _run_archive(source_db: Path, bundle_path: Path) -> None:
     )
     console.print(f"Bundle: [blue]{bundle_path}[/blue]")
 
+    if s.messages_in_icloud_likely and s.cloud_unfetched_attachments > 0:
+        console.print()
+        console.print(
+            f"[bold yellow]Heads up:[/bold yellow] {s.cloud_unfetched_attachments:,} "
+            "attachments exist in iCloud but were not downloaded to this Mac, "
+            "so they were not included in the archive."
+        )
+        console.print(
+            "  Messages in iCloud appears to be enabled. To capture the missing "
+            "attachments:\n"
+            "  1. System Settings → Apple Account → iCloud → See All → Messages\n"
+            "     → click [bold]Download Messages from iCloud[/bold]\n"
+            "  2. Wait for the Attachments folder to grow to its full size\n"
+            "  3. Re-run [bold]imessage-archiver archive[/bold] — already-archived "
+            "rows are no-ops, only the newly-downloaded ones get added\n"
+            "  Or run [bold]imessage-archiver prefetch[/bold] (experimental) to "
+            "drive Messages.app via AppleScript and trigger the downloads."
+        )
+
 
 # ---------------------------------------------------------------------------
 # verify
@@ -301,6 +320,83 @@ def info(archive_path: str | None) -> None:
                 ts = datetime.datetime.fromtimestamp(started).strftime("%Y-%m-%d %H:%M")
                 t.add_row(run_id[:8] + "…", ts, str(msg_count or "?"), ver or "?")
             console.print(t)
+
+
+# ---------------------------------------------------------------------------
+# prefetch
+# ---------------------------------------------------------------------------
+
+
+@cli.command()
+@click.option(
+    "--wait",
+    "scroll_wait_s",
+    type=float,
+    default=3.0,
+    show_default=True,
+    help="Seconds to wait after each conversation scroll, to let "
+    "CloudKit fetches complete. Increase on slow connections.",
+)
+@click.option(
+    "--max",
+    "max_conversations",
+    type=int,
+    default=None,
+    help="Stop after this many conversations (mainly for testing).",
+)
+def prefetch(scroll_wait_s: float, max_conversations: int | None) -> None:
+    """Force-fetch cloud-only iMessage attachments via Messages.app (experimental).
+
+    Drives Messages.app through every conversation, scrolling each to
+    its earliest message — that triggers CloudKit to fetch attachments
+    that were evicted from the local Mac. Once they're local, a
+    subsequent `imessage-archiver archive` captures them in the bundle.
+
+    EXPERIMENTAL. Requires:
+      • Messages.app installed
+      • Accessibility permission granted to your terminal app
+        (System Settings → Privacy & Security → Accessibility)
+      • Messages.app NOT in focus while this runs (it will activate
+        on its own — but if you click around, the script may misclick)
+
+    If this fails, you can do the same thing manually via:
+      System Settings → Apple Account → iCloud → See All → Messages
+      → Download Messages from iCloud
+    """
+    from imessage_archiver.core import icloud_prefetch
+
+    console.print(
+        "[yellow]Experimental.[/yellow] This drives Messages.app via "
+        "AppleScript to trigger CloudKit fetches."
+    )
+    console.print(f"  Wait per conversation: [bold]{scroll_wait_s}s[/bold]")
+    if max_conversations:
+        console.print(f"  Stopping after: [bold]{max_conversations}[/bold] conversations")
+    console.print()
+
+    try:
+        result = icloud_prefetch.run(
+            scroll_wait_s=scroll_wait_s,
+            max_conversations=max_conversations,
+        )
+    except icloud_prefetch.PrefetchError as e:
+        err_console.print(f"Prefetch failed: {e}")
+        err_console.print(
+            "\nFall back to System Settings → Apple Account → iCloud → "
+            "See All → Messages → Download Messages from iCloud."
+        )
+        sys.exit(1)
+
+    status = "aborted" if result.aborted else "complete"
+    console.print(
+        f"[green]Prefetch {status}[/green] — visited "
+        f"{result.conversations_visited:,} conversations in "
+        f"{result.elapsed_seconds:.1f}s."
+    )
+    console.print(
+        "\nWait a few minutes for any in-flight downloads to settle, then run "
+        "[bold]imessage-archiver archive[/bold]."
+    )
 
 
 # ---------------------------------------------------------------------------

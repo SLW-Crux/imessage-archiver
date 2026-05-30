@@ -150,6 +150,18 @@ class ArchiveWriter:
         run_rowid = self._start_run(run_id, started_at, source_sha256, source_db_path)
 
         stats = RunStats()
+        # Inspect cloud state of the SOURCE snapshot so we can warn the user
+        # if Messages-in-iCloud has evicted attachments. Failure is non-fatal —
+        # the archive proceeds with whatever's locally available.
+        try:
+            from imessage_archiver.db.cloud_status import inspect as _cloud_inspect
+
+            cs = _cloud_inspect(reader._path)
+            stats.messages_in_icloud_likely = cs.messages_in_icloud_likely
+            stats.cloud_unfetched_attachments = cs.cloud_only_unfetched
+        except Exception:
+            pass
+
         chats = reader.list_chats()
 
         with TarWriter(self._tar_path) as tar:
@@ -448,6 +460,14 @@ class ArchiveWriter:
             "attachment_count": self._count("attachments"),
             "missing_attachment_count": self._count_missing(),
             "archive_size_bytes": tar_size,
+            # Cloud-vs-local statistics. cloud_unfetched_attachment_count
+            # > 0 means the user has Messages in iCloud on AND attachments
+            # exist in the CloudKit container that were never fetched
+            # locally — those are NOT broken, but they're not in this
+            # bundle. The iOS reader / CLI surface this so the user can
+            # decide whether to fetch and re-archive.
+            "messages_in_icloud_likely": stats.messages_in_icloud_likely,
+            "cloud_unfetched_attachment_count": stats.cloud_unfetched_attachments,
         }
 
         atomic_write_text(self._manifest_path, json.dumps(manifest, indent=2))
@@ -475,6 +495,12 @@ class RunStats:
         self.attachments_seen = 0
         self.attachments_written = 0
         self.attachments_missing = 0
+        # Set by ArchiveWriter.run() when Messages in iCloud appears active and
+        # some attachments are cloud-only (never fetched locally). These are
+        # NOT broken — they exist in iCloud; the user just needs to fetch them
+        # before re-archiving for a complete bundle.
+        self.cloud_unfetched_attachments = 0
+        self.messages_in_icloud_likely = False
 
 
 class _AttStats:

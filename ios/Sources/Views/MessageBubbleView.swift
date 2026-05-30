@@ -1,8 +1,20 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct MessageBubbleView: View {
     let message: Message
+    /// Show the sender's name above the bubble — group chats, received
+    /// messages, first message of a same-sender run only.
     let showSender: Bool
+    /// First message of a same-sender run. Drives the top padding so
+    /// consecutive same-sender bubbles cluster (2pt) while sender changes
+    /// get a breathing gap (8pt). The run grouping is what conveys
+    /// authorship without drawing a custom tail shape.
+    let isFirstInRun: Bool
     let reader: ArchiveReader
     let cache: AttachmentCache
     let tarReader: TarReader?
@@ -12,11 +24,12 @@ struct MessageBubbleView: View {
 
     var body: some View {
         VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 4) {
-            if showSender && !message.isFromMe {
+            if showSender {
                 Text(message.displaySender)
                     .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, Spacing.bubblePaddingHorizontal)
             }
 
             // Attachments + bubble + reactions stack as siblings inside one
@@ -59,7 +72,8 @@ struct MessageBubbleView: View {
                     .transition(.opacity)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.top, isFirstInRun ? Spacing.bubbleGroupSpacing : Spacing.bubbleRunSpacing)
+        .padding(.bottom, 0)
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.15)) { showTimestamp.toggle() }
         }
@@ -68,6 +82,7 @@ struct MessageBubbleView: View {
                 attachments = (try? await reader.attachments(for: message.messageGuid)) ?? []
             }
         }
+        .contextMenu { contextMenuItems }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
     }
@@ -105,6 +120,32 @@ struct MessageBubbleView: View {
             // as accent-on-accent and disappear.
             .tint(message.isFromMe ? .white : .accentColor)
         }
+    }
+
+    @ViewBuilder
+    private var contextMenuItems: some View {
+        if let text = message.text, !text.isEmpty {
+            Button {
+                copyToPasteboard(text)
+            } label: {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+            // ShareLink bridges to NSSharingServicePicker on macOS and
+            // UIActivityViewController on iOS automatically — one API,
+            // platform-appropriate UI both places.
+            ShareLink(item: text) {
+                Label("Share", systemImage: "square.and.arrow.up")
+            }
+        }
+    }
+
+    private func copyToPasteboard(_ text: String) {
+        #if os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #else
+        UIPasteboard.general.string = text
+        #endif
     }
 
     private var bubbleBackground: Color {

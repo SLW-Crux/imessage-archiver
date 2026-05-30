@@ -92,12 +92,28 @@ final class ArchiveReader: Sendable {
 
     func chats() async throws -> [Chat] {
         try await dbQueue.read { db in
+            // Pulls the literal last message per chat (by timestamp) into
+            // the same row, so the chat-list view doesn't have to fan out
+            // a query per row. The window function runs once over messages,
+            // partitioned by chat_guid — SQLite 3.25+, which is iOS 13+.
             let rows = try Row.fetchAll(db, sql: """
-                SELECT chat_guid, display_name, chat_identifier, service_name,
-                       is_group, participants_json, first_message_at, last_message_at,
-                       message_count
-                FROM chats
-                ORDER BY last_message_at DESC NULLS LAST
+                WITH last_per_chat AS (
+                    SELECT chat_guid, text, is_from_me, has_attachments,
+                           ROW_NUMBER() OVER (
+                             PARTITION BY chat_guid ORDER BY timestamp DESC
+                           ) AS rn
+                    FROM messages
+                )
+                SELECT c.chat_guid, c.display_name, c.chat_identifier, c.service_name,
+                       c.is_group, c.participants_json, c.first_message_at, c.last_message_at,
+                       c.message_count,
+                       lpc.text AS last_text,
+                       lpc.is_from_me AS last_from_me,
+                       lpc.has_attachments AS last_has_attachments
+                FROM chats c
+                LEFT JOIN last_per_chat lpc
+                       ON lpc.chat_guid = c.chat_guid AND lpc.rn = 1
+                ORDER BY c.last_message_at DESC NULLS LAST
                 """)
             return rows.map(Self.chatFromRow)
         }
@@ -205,7 +221,10 @@ final class ArchiveReader: Sendable {
             participants: participants,
             firstMessageAt: (row["first_message_at"] as? Int64).map { Date(timeIntervalSince1970: Double($0)) },
             lastMessageAt: (row["last_message_at"] as? Int64).map { Date(timeIntervalSince1970: Double($0)) },
-            messageCount: Int(row["message_count"] as? Int64 ?? 0)
+            messageCount: Int(row["message_count"] as? Int64 ?? 0),
+            lastPreviewText: row["last_text"],
+            lastPreviewFromMe: (row["last_from_me"] as? Int64 ?? 0) != 0,
+            lastPreviewHasAttachments: (row["last_has_attachments"] as? Int64 ?? 0) != 0
         )
     }
 

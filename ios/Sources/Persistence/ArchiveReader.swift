@@ -163,6 +163,16 @@ final class ArchiveReader: Sendable {
         }
     }
 
+    /// Load up to `limit` messages anchored at the most recent. `before`
+    /// pages backward — pass the oldest currently-loaded message's
+    /// timestamp to get the next window of older messages.
+    ///
+    /// Query selects `ORDER BY timestamp DESC LIMIT ?` to take the most
+    /// recent rows; the result is then reversed in Swift so callers
+    /// receive messages in chronological order (oldest first) for
+    /// display in a top-down thread. Without the DESC + reverse, the
+    /// first call would return the oldest 200 messages in the chat —
+    /// not what anyone wants when they open a conversation.
     func messages(in chatGuid: String, limit: Int = 200, before: Date? = nil) async throws -> [Message] {
         try await dbQueue.read { db in
             var sql = """
@@ -177,13 +187,46 @@ final class ArchiveReader: Sendable {
                 sql += " AND timestamp < ?"
                 args.append(Int64(before.timeIntervalSince1970))
             }
-            sql += " ORDER BY timestamp ASC"
+            sql += " ORDER BY timestamp DESC"
             if limit > 0 {
                 sql += " LIMIT ?"
                 args.append(limit)
             }
             let rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(args))
+            return rows.map(Self.messageFromRow).reversed()
+        }
+    }
+
+    /// Load up to `limit` messages from the start of `year` forward, in
+    /// chronological order. Drives the year-picker "jump to year" flow
+    /// in `ThreadView`.
+    func messages(in chatGuid: String, fromYear year: Int, limit: Int = 200) async throws -> [Message] {
+        let yearStart = Calendar.current.date(from: DateComponents(year: year)) ?? Date()
+        let yearStartUnix = Int64(yearStart.timeIntervalSince1970)
+        return try await dbQueue.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT message_guid, chat_guid, sender_handle, sender_name,
+                       timestamp, text, is_from_me, reply_to_guid,
+                       reactions_json, has_attachments, date_edited, date_retracted
+                FROM messages
+                WHERE chat_guid = ? AND timestamp >= ?
+                ORDER BY timestamp ASC
+                LIMIT ?
+                """, arguments: [chatGuid, yearStartUnix, limit])
             return rows.map(Self.messageFromRow)
+        }
+    }
+
+    /// Distinct calendar years that contain messages in this chat,
+    /// newest year first. Powers the year-picker menu.
+    func years(in chatGuid: String) async throws -> [Int] {
+        try await dbQueue.read { db in
+            try Int.fetchAll(db, sql: """
+                SELECT DISTINCT CAST(strftime('%Y', timestamp, 'unixepoch') AS INTEGER) AS year
+                FROM messages
+                WHERE chat_guid = ?
+                ORDER BY year DESC
+                """, arguments: [chatGuid])
         }
     }
 

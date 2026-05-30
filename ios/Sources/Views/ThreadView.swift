@@ -5,12 +5,17 @@ struct ThreadView: View {
     let reader: ArchiveReader
 
     @State private var messages: [Message] = []
+    @State private var availableYears: [Int] = []
     @State private var isLoading = true
     @State private var hasMore = false
     @State private var loadError: String?
     @State private var attachmentCache = AttachmentCache()
     @State private var tarReader: TarReader?
     @State private var loadTask: Task<Void, Never>?
+    /// Set by `loadFromYear` so the next layout pass scrolls to the
+    /// first message of the chosen year. Cleared on completion so
+    /// later loads (loadMore appending) don't disturb scroll position.
+    @State private var scrollAnchorGuid: String?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -51,8 +56,17 @@ struct ThreadView: View {
             }
             .task {
                 await loadInitial()
-                if let last = messages.last {
-                    proxy.scrollTo(last.messageGuid, anchor: .bottom)
+                scrollToLatest(proxy: proxy)
+            }
+            .onChange(of: scrollAnchorGuid) { _, anchor in
+                guard let anchor else { return }
+                // Brief delay so SwiftUI lays out the freshly-loaded messages
+                // before we scroll into them; otherwise the proxy can't
+                // resolve the id.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(50))
+                    proxy.scrollTo(anchor, anchor: .top)
+                    scrollAnchorGuid = nil
                 }
             }
         }
@@ -69,7 +83,36 @@ struct ThreadView: View {
                 )
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .platformTrailing) {
+                yearPickerMenu
+            }
+        }
         .onDisappear { loadTask?.cancel() }
+    }
+
+    @ViewBuilder
+    private var yearPickerMenu: some View {
+        if !availableYears.isEmpty {
+            Menu {
+                Button {
+                    Task { await loadLatest() }
+                } label: {
+                    Label("Jump to Latest", systemImage: "arrow.down.to.line")
+                }
+                Divider()
+                Section("Jump to Year") {
+                    ForEach(availableYears, id: \.self) { year in
+                        Button("\(year, format: .number.grouping(.never))") {
+                            Task { await loadFromYear(year) }
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "calendar")
+                    .accessibilityLabel("Jump to year")
+            }
+        }
     }
 
     private func loadInitial() async {
@@ -81,19 +124,45 @@ struct ThreadView: View {
             try Task.checkCancellation()
             messages = loaded
             hasMore = loaded.count == 200
-            // attachments.tar may not yet be downloaded; non-fatal.
+            availableYears = (try? await reader.years(in: chat.chatGuid)) ?? []
             do {
                 tarReader = try TarReader(bundleURL: reader.bundleURL)
             } catch {
                 tarReader = nil
-                // Don't surface — attachments are non-essential for thread browsing.
             }
         } catch is CancellationError {
-            // User backed out mid-load; nothing to show.
         } catch {
             loadError = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func loadLatest() async {
+        do {
+            let loaded = try await reader.messages(in: chat.chatGuid, limit: 200)
+            messages = loaded
+            hasMore = loaded.count == 200
+            // Latest jump = scroll to bottom, same as initial load.
+            if let lastGuid = messages.last?.messageGuid {
+                scrollAnchorGuid = lastGuid
+            }
+        } catch {
+            loadError = error.localizedDescription
+        }
+    }
+
+    private func loadFromYear(_ year: Int) async {
+        do {
+            let loaded = try await reader.messages(in: chat.chatGuid, fromYear: year, limit: 200)
+            guard !loaded.isEmpty else { return }
+            messages = loaded
+            // After year jump, there's almost always older content. Allow
+            // the user to page backward via the "Load earlier" button.
+            hasMore = true
+            scrollAnchorGuid = loaded.first?.messageGuid
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 
     private func loadMore() async {
@@ -103,9 +172,14 @@ struct ThreadView: View {
             messages = earlier + messages
             hasMore = earlier.count == 200
         } catch is CancellationError {
-            // ignore
         } catch {
             loadError = error.localizedDescription
+        }
+    }
+
+    private func scrollToLatest(proxy: ScrollViewProxy) {
+        if let last = messages.last {
+            proxy.scrollTo(last.messageGuid, anchor: .bottom)
         }
     }
 

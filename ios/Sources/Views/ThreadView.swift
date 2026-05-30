@@ -15,7 +15,10 @@ struct ThreadView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 2) {
+                // Spacing is 0 here; each MessageBubbleView contributes its
+                // own top padding (8pt at run start, 2pt within a run) so
+                // same-sender consecutive bubbles cluster.
+                LazyVStack(spacing: 0) {
                     if hasMore {
                         Button("Load earlier messages") {
                             Task { await loadMore() }
@@ -25,13 +28,16 @@ struct ThreadView: View {
                     }
                     ForEach(Array(messages.enumerated()), id: \.element.id) { idx, message in
                         let prev = idx > 0 ? messages[idx - 1] : nil
+                        let isFirstInRun = prev?.senderHandle != message.senderHandle
+                            || prev?.isFromMe != message.isFromMe
                         VStack(spacing: 0) {
                             if shouldShowDateSeparator(message: message, previous: prev) {
                                 DateSeparatorView(date: message.timestamp)
                             }
                             MessageBubbleView(
                                 message: message,
-                                showSender: chat.isGroup && message.senderHandle != prev?.senderHandle,
+                                showSender: chat.isGroup && !message.isFromMe && isFirstInRun,
+                                isFirstInRun: isFirstInRun,
                                 reader: reader,
                                 cache: attachmentCache,
                                 tarReader: tarReader

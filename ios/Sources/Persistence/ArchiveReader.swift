@@ -18,7 +18,17 @@ final class ArchiveReader: Sendable {
     /// rather than silently mis-render unknown columns as nil.
     static let maxSupportedSchemaVersion = 1
 
-    private let dbPool: DatabasePool
+    // DatabaseQueue, not DatabasePool. DatabasePool requires WAL mode,
+    // which creates `archive.sqlite-wal` and `-shm` companion files next
+    // to the SQLite. For bundles in an iCloud-managed Documents folder
+    // (Mac in particular), writing those companions is denied by the
+    // sandbox + iCloud coordination layer — opening the DB then fails
+    // with SQLITE_CANTOPEN.
+    //
+    // DatabaseQueue with readonly = true uses rollback-journal-immutable
+    // mode and does no companion writes. Slightly less concurrent than
+    // DatabasePool but that's fine for a single-reader UI app.
+    private let dbQueue: DatabaseQueue
     let manifest: ArchiveManifest
     let bundleURL: URL
 
@@ -36,11 +46,11 @@ final class ArchiveReader: Sendable {
         let sqliteURL = bundleURL.appendingPathComponent("archive.sqlite")
         var config = Configuration()
         config.readonly = true
-        self.dbPool = try DatabasePool(path: sqliteURL.path, configuration: config)
+        self.dbQueue = try DatabaseQueue(path: sqliteURL.path, configuration: config)
     }
 
     func chats() async throws -> [Chat] {
-        try await dbPool.read { db in
+        try await dbQueue.read { db in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT chat_guid, display_name, chat_identifier, service_name,
                        is_group, participants_json, first_message_at, last_message_at,
@@ -53,7 +63,7 @@ final class ArchiveReader: Sendable {
     }
 
     func messages(in chatGuid: String, limit: Int = 200, before: Date? = nil) async throws -> [Message] {
-        try await dbPool.read { db in
+        try await dbQueue.read { db in
             var sql = """
                 SELECT message_guid, chat_guid, sender_handle, sender_name,
                        timestamp, text, is_from_me, reply_to_guid,
@@ -77,7 +87,7 @@ final class ArchiveReader: Sendable {
     }
 
     func attachments(for messageGuid: String) async throws -> [Attachment] {
-        try await dbPool.read { db in
+        try await dbQueue.read { db in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT attachment_guid, message_guid, filename, mime_type, uti,
                        size, sha256, tar_offset, tar_length, state
@@ -92,7 +102,7 @@ final class ArchiveReader: Sendable {
     func search(query: String, limit: Int = 100) async throws -> [SearchHit] {
         let sanitised = Self.sanitiseFTS5Query(query)
         guard !sanitised.isEmpty else { return [] }
-        return try await dbPool.read { db in
+        return try await dbQueue.read { db in
             // SQLite FTS5 snippet(table, col, before, after, ellipsis, tokens):
             // col -1 = all FTS-indexed columns. Markers are Private Use Area
             // codepoints (U+E000/U+E001) which are guaranteed not to appear

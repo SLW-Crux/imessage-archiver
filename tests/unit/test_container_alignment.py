@@ -35,8 +35,8 @@ from imessage_archiver.gui.archive_panel import (
 
 # The iOS app's hardcoded bundle ID (see ios/project.yml and
 # ios/Sources/Persistence/iCloudCoordinator.swift `kContainerID`).
-EXPECTED_IOS_BUNDLE_ID = "com.slw.imessage-archiver"
-EXPECTED_CONTAINER_DIR = "iCloud~com~slw~imessage-archiver"
+EXPECTED_MAC_CONTAINER_ID = "com.honk.imsgarchiver-mac"
+EXPECTED_CONTAINER_DIR = "iCloud~com~honk~imsgarchiver-mac"
 
 
 def test_cli_default_dest_is_inside_ios_ubiquity_container() -> None:
@@ -60,7 +60,7 @@ def test_gui_default_dest_matches_cli() -> None:
 
 
 def test_bundle_id_consistent_across_modules() -> None:
-    assert CLI_BUNDLE_ID == GUI_BUNDLE_ID == EXPECTED_IOS_BUNDLE_ID
+    assert CLI_BUNDLE_ID == GUI_BUNDLE_ID == EXPECTED_MAC_CONTAINER_ID
     assert CLI_CONTAINER == GUI_CONTAINER == EXPECTED_CONTAINER_DIR
 
 
@@ -70,15 +70,15 @@ def test_ios_project_yml_uses_same_container_id() -> None:
     text = project_yml.read_text()
     # The iCloud capability declares the container with `iCloud.` prefix.
     assert (
-        f"iCloud.{EXPECTED_IOS_BUNDLE_ID}" in text
-    ), f"ios/project.yml must declare iCloud.{EXPECTED_IOS_BUNDLE_ID} as its container"
+        f"iCloud.{EXPECTED_MAC_CONTAINER_ID}" in text
+    ), f"ios/project.yml must declare iCloud.{EXPECTED_MAC_CONTAINER_ID} as its container"
 
 
 def test_ios_entitlements_uses_same_container_id() -> None:
     repo_root = Path(__file__).parent.parent.parent
     ent = repo_root / "ios" / "iMessageArchiver.entitlements"
     text = ent.read_text()
-    assert f"iCloud.{EXPECTED_IOS_BUNDLE_ID}" in text
+    assert f"iCloud.{EXPECTED_MAC_CONTAINER_ID}" in text
 
 
 def test_ios_coordinator_uses_same_container_id() -> None:
@@ -88,6 +88,6 @@ def test_ios_coordinator_uses_same_container_id() -> None:
     # Look for kContainerID literal.
     match = re.search(r'kContainerID\s*=\s*"([^"]+)"', text)
     assert match, "iCloudCoordinator.swift must define kContainerID"
-    assert match.group(1) == f"iCloud.{EXPECTED_IOS_BUNDLE_ID}", (
-        f"kContainerID = {match.group(1)!r}, " f"expected iCloud.{EXPECTED_IOS_BUNDLE_ID!r}"
+    assert match.group(1) == f"iCloud.{EXPECTED_MAC_CONTAINER_ID}", (
+        f"kContainerID = {match.group(1)!r}, " f"expected iCloud.{EXPECTED_MAC_CONTAINER_ID!r}"
     )

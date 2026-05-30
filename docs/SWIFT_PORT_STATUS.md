@@ -37,14 +37,15 @@ Tracking the port of the Python archiver (`src/imessage_archiver/`, ~2000 LoC) i
 
 ---
 
-## Phase 5 — SwiftUI integration (next PR)
+## Phase 5 — SwiftUI integration ✅
 
 | Module | Status |
 |---|---|
-| `CreateArchiveView.swift` SwiftUI screen | ⏳ TODO |
-| Wire `RootView` `.noBundle` state to launch the writer | ⏳ TODO |
-| Progress bridge (async writer → `@Observable` state) | ⏳ TODO |
-| Post-archive prompt for yearly Calendar reminder | ⏳ TODO |
+| `CreateArchiveCoordinator.swift` — `@Observable` state machine that owns the run | ✅ (Mac-only via `#if os(macOS)`) |
+| `CreateArchiveView.swift` SwiftUI screen with phase-driven UI | ✅ |
+| `RootView` `.noBundle` state routes to `CreateArchiveView` on Mac | ✅ |
+| Progress bridge: writer's `ProgressCallback` → `@MainActor` phase update | ✅ |
+| Post-archive prompt for yearly Calendar reminder | ⏳ Phase 6 |
 
 ## Phase 6 — distribution
 

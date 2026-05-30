@@ -1,5 +1,11 @@
 import SwiftUI
 import QuickLook
+import CoreGraphics
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct AttachmentGridView: View {
     let attachments: [Attachment]
@@ -10,7 +16,7 @@ struct AttachmentGridView: View {
     @State private var previewGuid: String?
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 4) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 4)], spacing: 4) {
             ForEach(attachments) { attachment in
                 AttachmentThumbnailView(
                     attachment: attachment,
@@ -54,99 +60,179 @@ struct AttachmentThumbnailView: View {
     let cache: AttachmentCache
     let tarReader: TarReader?
 
-    @State private var thumbnail: PlatformImage?
-    @State private var isLoading = false
+    @Environment(\.displayScale) private var displayScale
+    @State private var phase: Phase = .loading
 
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.platformSecondaryBackground)
-                .frame(width: 80, height: 80)
+    /// Phase machine keeps illegal mid-load states unrepresentable. A
+    /// thumbnail is exactly one of: loading, decoded image, file we know
+    /// nothing about beyond its symbol, or "not included in the bundle."
+    enum Phase: Equatable {
+        case loading
+        case image(PlatformImage)
+        case missing
+        case file(symbol: String, name: String)
 
-            if let thumb = thumbnail {
-                Image(platformImage: thumb)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 80, height: 80)
-                    .clipped()
-                    .cornerRadius(8)
-            } else if attachment.isExtractable {
-                if isLoading {
-                    ProgressView().frame(width: 80, height: 80)
-                } else {
-                    icon
-                }
-            } else {
-                missingIcon
+        static func == (lhs: Phase, rhs: Phase) -> Bool {
+            // Compare by case; the inner PlatformImage doesn't conform
+            // to Equatable, and re-evaluating an .image vs the same
+            // .image is the no-op we want.
+            switch (lhs, rhs) {
+            case (.loading, .loading), (.missing, .missing): return true
+            case (.image, .image): return true
+            case (.file(let s1, let n1), .file(let s2, let n2)):
+                return s1 == s2 && n1 == n2
+            default: return false
             }
         }
-        .task(id: attachment.attachmentGuid) {
-            await loadThumbnail()
-        }
-        .accessibilityLabel(displayFilename ?? "Attachment")
     }
 
-    /// The `filename` column in archive.sqlite is the full source path on
-    /// the Mac that produced the archive (e.g.
-    /// `~/Library/Messages/Attachments/de/14/.../IMG_0001.HEIC`). Showing
-    /// it raw leaks user filesystem layout and truncates uselessly. Use
-    /// the basename for display + accessibility.
+    private let side: CGFloat = 80
+
+    var body: some View {
+        Group {
+            switch phase {
+            case .loading:
+                placeholder
+                    .overlay { ProgressView().controlSize(.small) }
+                    .redacted(reason: .placeholder)
+
+            case .image(let img):
+                Image(platformImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .transition(.opacity)
+
+            case .missing:
+                missingView
+
+            case .file(let symbol, let name):
+                fileView(symbol: symbol, name: name)
+            }
+        }
+        .frame(width: side, height: side)
+        .clipShape(RoundedRectangle.thumbnail)
+        .overlay(alignment: .bottomTrailing) {
+            // Keep the play overlay on top of the real video frame so
+            // type is still signaled when we successfully extract one.
+            if isVideo, case .image = phase {
+                Image(systemName: "play.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white, .black.opacity(0.4))
+                    .padding(4)
+            }
+        }
+        .task(id: attachment.attachmentGuid) { await load() }
+        .animation(Motion.attachmentFade, value: phase)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var placeholder: some View {
+        RoundedRectangle.thumbnail
+            .fill(Color.platformSecondaryBackground)
+    }
+
+    /// Honest missing-attachment state. No cloud icon (the bundle is
+    /// frozen — nothing to download), no retry button (no live source
+    /// to retry against). The user knows the gap is real.
+    private var missingView: some View {
+        placeholder
+            .overlay {
+                VStack(spacing: 4) {
+                    Image(systemName: "photo.badge.exclamationmark")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                    Text("Not Included")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+    }
+
+    private func fileView(symbol: String, name: String) -> some View {
+        placeholder
+            .overlay {
+                VStack(spacing: 4) {
+                    Image(systemName: symbol).font(.title2)
+                    Text(name)
+                        .font(.caption2)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .padding(.horizontal, 4)
+                }
+                .foregroundStyle(.secondary)
+            }
+    }
+
     private var displayFilename: String? {
         guard let name = attachment.filename, !name.isEmpty else { return nil }
         let base = (name as NSString).lastPathComponent
         return base.isEmpty ? nil : base
     }
 
-    @ViewBuilder
-    private var icon: some View {
-        let mime = attachment.mimeType ?? ""
-        VStack(spacing: 4) {
-            Image(systemName: mimeIcon(mime))
-                .font(.title2)
-                .foregroundStyle(.secondary)
-            if let name = displayFilename {
-                Text(name)
-                    .font(.system(size: 9))
-                    .lineLimit(2)
-                    .truncationMode(.middle)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .frame(width: 80, height: 80)
-    }
+    private var mime: String { attachment.mimeType ?? "" }
+    private var isImage: Bool { mime.hasPrefix("image/") }
+    private var isVideo: Bool { mime.hasPrefix("video/") }
 
-    @ViewBuilder
-    private var missingIcon: some View {
-        VStack(spacing: 4) {
-            Image(systemName: "icloud.slash")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-            Text("Not downloaded")
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(width: 80, height: 80)
-    }
-
-    private func loadThumbnail() async {
-        guard attachment.isExtractable, let tarReader, !isLoading else { return }
-        let mime = attachment.mimeType ?? ""
-        guard mime.hasPrefix("image/") else { return }
-        isLoading = true
-        if let url = try? await cache.url(for: attachment, tarReader: tarReader),
-           let data = try? Data(contentsOf: url),
-           let img = PlatformImage(data: data) {
-            thumbnail = img
-        }
-        isLoading = false
-    }
-
-    private func mimeIcon(_ mime: String) -> String {
-        if mime.hasPrefix("image/") { return "photo" }
-        if mime.hasPrefix("video/") { return "play.circle.fill" }
+    private func mimeSymbol() -> String {
         if mime.hasPrefix("audio/") { return "waveform" }
         return "doc"
+    }
+
+    private var accessibilityLabel: String {
+        switch phase {
+        case .missing:
+            return "\(displayFilename ?? "Attachment"), not included in archive"
+        default:
+            return displayFilename ?? "Attachment"
+        }
+    }
+
+    private func load() async {
+        // Not extractable = the bundle does not contain this attachment.
+        // This is the honest gap — no retry against a remote source
+        // exists for a frozen archive.
+        guard attachment.isExtractable, let tarReader else {
+            phase = .missing
+            return
+        }
+
+        let url: URL
+        do {
+            url = try await cache.url(for: attachment, tarReader: tarReader)
+        } catch {
+            phase = .missing
+            return
+        }
+
+        // Decode at the pixel target — `side * 2 * displayScale` covers
+        // Retina without loading the full source. ImageIO downsamples
+        // directly inside CGImageSourceCreateThumbnailAtIndex.
+        let maxPixel = side * 2 * displayScale
+
+        if isImage {
+            if let cg = await Thumbnailer.image(at: url, maxPixel: maxPixel),
+               let platform = Self.platformImage(from: cg) {
+                phase = .image(platform)
+            } else {
+                phase = .missing
+            }
+        } else if isVideo {
+            if let cg = await Thumbnailer.videoFrame(at: url, maxPixel: maxPixel),
+               let platform = Self.platformImage(from: cg) {
+                phase = .image(platform)
+            } else {
+                phase = .file(symbol: "video.circle", name: displayFilename ?? "Video")
+            }
+        } else {
+            phase = .file(symbol: mimeSymbol(), name: displayFilename ?? "File")
+        }
+    }
+
+    private static func platformImage(from cg: CGImage) -> PlatformImage? {
+        #if os(macOS)
+        return NSImage(cgImage: cg, size: .zero)
+        #else
+        return UIImage(cgImage: cg)
+        #endif
     }
 }

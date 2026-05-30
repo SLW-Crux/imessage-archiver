@@ -10,30 +10,57 @@ struct NoArchiveView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Image(systemName: "archivebox")
+            Image(systemName: symbol)
                 .font(.system(size: 56))
                 .foregroundStyle(.secondary)
-            Text(reason == .noContainer ? "iCloud Not Available" : "No Archive Found")
+                .symbolRenderingMode(.hierarchical)
+                .accessibilityHidden(true)
+
+            Text(title)
                 .font(.title2.bold())
+                .multilineTextAlignment(.center)
+
             Text(instructions)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
+                .frame(maxWidth: 420)
+
             if reason == .noBundle {
                 Button("Check Again") {
                     appState.coordinator.start()
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             }
         }
         .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var title: String {
+        switch reason {
+        // "No Archive Yet" — Mac users (and first-run iOS users) don't
+        // know an archive must be created by the companion archiver
+        // first. "Yet" signals that nothing was lost, just not yet
+        // created.
+        case .noBundle:    return "No Archive Yet"
+        case .noContainer: return "iCloud Drive Required"
+        }
+    }
+
+    private var symbol: String {
+        switch reason {
+        case .noBundle:    return "tray.and.arrow.down"
+        case .noContainer: return "icloud.slash"
+        }
     }
 
     private var instructions: String {
         switch reason {
-        case .noContainer:
-            return "Enable iCloud Drive in Settings → [Your Name] → iCloud → iCloud Drive to sync your archive."
         case .noBundle:
-            return "Run iMessage Archiver on your Mac to create an archive, then wait for iCloud to sync."
+            return "Create an archive by running iMessage Archiver on your Mac, then wait for iCloud to sync the bundle to this device."
+        case .noContainer:
+            return "Turn on iCloud Drive in Settings to sync your archive between devices."
         }
     }
 }

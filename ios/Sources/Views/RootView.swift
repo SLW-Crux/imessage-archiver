@@ -16,7 +16,16 @@ struct RootView: View {
             case .noContainer:
                 NoArchiveView(reason: .noContainer)
             case .noBundle:
+                // Mac runs the native archiver inline — show the
+                // CreateArchiveView so the user can build the archive
+                // without ever touching Python or a CLI. iOS stays on
+                // the read-only "No Archive Yet" prompt; it doesn't
+                // own a Messages database to archive.
+                #if os(macOS)
+                CreateArchiveView()
+                #else
                 NoArchiveView(reason: .noBundle)
+                #endif
             case .downloading(let progress):
                 downloadingView(progress: progress)
             case .ready(let bundleURL):

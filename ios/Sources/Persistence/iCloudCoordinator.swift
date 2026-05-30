@@ -43,7 +43,13 @@ final class iCloudCoordinator {
     // `nextEventToken` is only mutated under `tokenLock` (see mintEventToken).
     // `nonisolated(unsafe)` was overkill: it's never accessed outside the lock.
     private nonisolated let tokenLock = NSLock()
-    private nonisolated var nextEventToken: UInt64 = 0
+    // `nonisolated(unsafe)` is required for mutable storage accessed from
+    // `mintEventToken` (which runs on a non-MainActor dispatch queue).
+    // Swift's "consider using 'nonisolated'" warning suggestion is wrong
+    // here — plain `nonisolated` only applies to `let`. The mutation is
+    // safe because every read/write of `nextEventToken` is gated by
+    // `tokenLock.lock()` inside `mintEventToken`.
+    private nonisolated(unsafe) var nextEventToken: UInt64 = 0
     private var lastProcessedToken: UInt64 = 0
 
     // nonisolated because queryDidUpdate (the only caller) runs on whatever

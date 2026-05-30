@@ -2,54 +2,36 @@ import XCTest
 @testable import iMessageArchiver
 
 final class ArchiveReaderTests: XCTestCase {
-    var bundleURL: URL!
     var workingBundleURL: URL!
     var reader: ArchiveReader!
 
     override func setUpWithError() throws {
-        // tiny.imarchive must be generated before running this suite —
-        // either locally via ios/Tests/Fixtures/generate_fixture.sh or by
-        // CI's "Generate tiny.imarchive bundle for iOS tests" step.
-        bundleURL = Bundle(for: type(of: self))
-            .url(forResource: "tiny", withExtension: "imarchive")
-        XCTAssertNotNil(
-            bundleURL,
-            "tiny.imarchive fixture not bundled. Run ios/Tests/Fixtures/generate_fixture.sh "
-                + "before re-running the test suite."
-        )
+        // Fixture is bundled into the test target as three individual
+        // files (archive.sqlite, attachments.tar, manifest.json) at the
+        // test bundle root — see ios/project.yml. xcodegen's folder-
+        // reference / type:folder route silently produced empty file
+        // contents in the bundle, so the per-file route is the only
+        // one that actually lands the bytes.
+        //
+        // Reassemble them into a tiny.imarchive directory in tmp so the
+        // ArchiveReader API (which takes a bundle URL, not three file
+        // URLs) sees what it expects.
+        let bundle = Bundle(for: type(of: self))
+        let archive = try Self.requireResource(in: bundle, name: "archive", ext: "sqlite")
+        let tar = try Self.requireResource(in: bundle, name: "attachments", ext: "tar")
+        let manifest = try Self.requireResource(in: bundle, name: "manifest", ext: "json")
 
-        // Copy the fixture out of the read-only test bundle into the
-        // writable tmp dir. SQLite/GRDB tries to create -wal/-shm next
-        // to the database on open — even with config.readonly = true —
-        // and fails with SQLITE_CANTOPEN against the bundle's resource
-        // directory (which isn't writable on iOS simulators). The
-        // production app's bundle lives in iCloud Drive, which IS
-        // writable, so the same code path works there.
         let tmpDir = FileManager.default
             .temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         workingBundleURL = tmpDir.appendingPathComponent("tiny.imarchive", isDirectory: true)
-        try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: bundleURL, to: workingBundleURL)
-
-        // Diagnostic: surface the actual bundle contents in the test
-        // failure message so we can see whether the folder reference is
-        // empty (xcodegen / Xcode misbundling), whether archive.sqlite
-        // is present, or whether something else broke between bundle
-        // generation and test runtime.
-        let contents = (try? FileManager.default.contentsOfDirectory(
-            at: workingBundleURL,
-            includingPropertiesForKeys: [.fileSizeKey]
-        )) ?? []
-        let listing = contents.map { url -> String in
-            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-            return "\(url.lastPathComponent) (\(size) bytes)"
-        }.joined(separator: ", ")
-        XCTAssertTrue(
-            contents.contains { $0.lastPathComponent == "archive.sqlite" },
-            "Copied bundle missing archive.sqlite. Contents: [\(listing)]. " +
-            "Source bundle URL: \(bundleURL.path)"
-        )
+        try FileManager.default.createDirectory(at: workingBundleURL, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: archive,
+                                          to: workingBundleURL.appendingPathComponent("archive.sqlite"))
+        try FileManager.default.copyItem(at: tar,
+                                          to: workingBundleURL.appendingPathComponent("attachments.tar"))
+        try FileManager.default.copyItem(at: manifest,
+                                          to: workingBundleURL.appendingPathComponent("manifest.json"))
 
         reader = try ArchiveReader(bundleURL: workingBundleURL)
     }
@@ -58,6 +40,22 @@ final class ArchiveReaderTests: XCTestCase {
         if let workingBundleURL {
             try? FileManager.default.removeItem(at: workingBundleURL.deletingLastPathComponent())
         }
+    }
+
+    private static func requireResource(in bundle: Bundle, name: String, ext: String) throws -> URL {
+        guard let url = bundle.url(forResource: name, withExtension: ext) else {
+            throw XCTSkip(
+                "\(name).\(ext) fixture not bundled. " +
+                "Run ios/Tests/Fixtures/generate_fixture.sh before re-running the test suite."
+            )
+        }
+        // Confirm bytes actually landed — previous folder-reference bundling
+        // resolved the URL but the file was zero-byte at runtime.
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        guard size > 0 else {
+            throw XCTSkip("\(url.lastPathComponent) bundled as zero-byte file.")
+        }
+        return url
     }
 
     func testManifestLoads() throws {

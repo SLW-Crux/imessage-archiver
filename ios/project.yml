@@ -133,18 +133,21 @@ targets:
       - path: Tests
         excludes:
           # The whole Fixtures directory is non-source: generate_fixture.sh
-          # is a shell helper, tiny.imarchive is a resource bundle that
-          # we re-add as a resource below.
+          # is a shell helper, fixture files are added as individual
+          # resources below.
           - "Fixtures"
-      # Add the .imarchive bundle directly (not its parent) so it lands
-      # at the test bundle's root, where Bundle.url(forResource:
-      # withExtension:) looks. `type: folder` makes Xcode treat the
-      # directory as a blue folder reference (copied verbatim into the
-      # bundle). Declared under sources: with explicit
-      # buildPhase: resources — xcodegen 2.45.4 silently drops the
-      # equivalent top-level resources: block on this project.
-      - path: Tests/Fixtures/tiny.imarchive
-        type: folder
+      # Bundle each fixture file individually rather than as a folder
+      # reference. The previous `type: folder` + buildPhase: resources
+      # combination produced a tiny.imarchive directory in the test
+      # bundle whose archive.sqlite copy was zero-byte at runtime,
+      # breaking SQLite open. Per-file resources land each file at the
+      # bundle root; the test reassembles the .imarchive directory in
+      # tmp at runtime.
+      - path: Tests/Fixtures/tiny.imarchive/archive.sqlite
+        buildPhase: resources
+      - path: Tests/Fixtures/tiny.imarchive/attachments.tar
+        buildPhase: resources
+      - path: Tests/Fixtures/tiny.imarchive/manifest.json
         buildPhase: resources
     dependencies:
       - target: iMessageArchiver

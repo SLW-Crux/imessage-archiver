@@ -19,6 +19,7 @@
 		18B826F3B45ECCC7E3E02D1C /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0B692BC5F2567C6326B828 /* Chat.swift */; };
 		19A0A863815AB9F455CA19F5 /* ArchiveReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821DD273186D880474C000C2 /* ArchiveReader.swift */; };
 		1DF69F6C01D195A73C3B85A2 /* Monogram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8E31A7E21A457107F59541 /* Monogram.swift */; };
+		2126BFB5B99BCF1E574C434E /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 7E12516BD19964BC078F6966 /* manifest.json */; };
 		223C87C4A0CAC119C9B0FA10 /* iMessageArchiverMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9509D46A3AAD2D95E947E757 /* iMessageArchiverMacApp.swift */; };
 		2FCFF2FEBCFAC98387CCF0BE /* Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937207C2E2989D23D73E448A /* Tokens.swift */; };
 		31B335308CA94BAA18F0FD0E /* PlatformImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A35F3581B65823A6AD49BE4 /* PlatformImage.swift */; };
@@ -26,7 +27,6 @@
 		42F4D24E594A03BCD3260173 /* iMessageArchiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */; };
 		4C9B5CEF5245756E2354A089 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 7994F1349E28B6C043A049EE /* GRDB */; };
 		4D905EDC5694017C449C94C9 /* AttachmentGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */; };
-		565E76F6CF9347945C4FF9D5 /* tiny.imarchive in Resources */ = {isa = PBXBuildFile; fileRef = 8B78D339147C6338F6B4DDA2 /* tiny.imarchive */; };
 		57FB995079D8E45E2055E0DC /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 36AD865687D5E22802D18618 /* GRDB */; };
 		5A50E39468E28C15A76C3D9E /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0B692BC5F2567C6326B828 /* Chat.swift */; };
 		5AD40665C18294A14A1DD849 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51725FA2022930096F27A42D /* SearchView.swift */; };
@@ -51,6 +51,7 @@
 		9602E766FAAC13746CA827DB /* Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937207C2E2989D23D73E448A /* Tokens.swift */; };
 		96BADF2DDE38BE5003C7581D /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEEF1850DEA6E7197739F0F1 /* Message.swift */; };
 		9870CA4AD3B20E92DFF3BFAF /* AttachmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */; };
+		A20ADDEE8F3F90ED379C0FCA /* attachments.tar in Resources */ = {isa = PBXBuildFile; fileRef = 74CD05F36D6FC47BEC5F56E3 /* attachments.tar */; };
 		A50A9B60BFAFD3D4A2878D1B /* ThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126B174C6BBC77EABB3C9C5B /* ThreadView.swift */; };
 		AE8F11BC8115D6A6E6EA988E /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CCC8E8F50C965564FB672C /* AppState.swift */; };
 		AF9812822207241150F1C5C9 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = EB4D02CC37A2172500E72CFE /* GRDB */; };
@@ -73,6 +74,7 @@
 		F905AAED12714FF4E5B9D183 /* SearchHit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64C85E9D97904A9E574010CC /* SearchHit.swift */; };
 		FB35838983D00410855A9D2B /* ThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126B174C6BBC77EABB3C9C5B /* ThreadView.swift */; };
 		FBA63BF314DD4195BC7FF764 /* Monogram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8E31A7E21A457107F59541 /* Monogram.swift */; };
+		FE956C7FA22A752A3EDD7C26 /* archive.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 3FA2067EA4564ED05E892A99 /* archive.sqlite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +92,7 @@
 		126B174C6BBC77EABB3C9C5B /* ThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadView.swift; sourceTree = "<group>"; };
 		2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudCoordinator.swift; sourceTree = "<group>"; };
 		3F30103889EF3C337C9E8BF4 /* ArchiveManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveManifest.swift; sourceTree = "<group>"; };
+		3FA2067EA4564ED05E892A99 /* archive.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = archive.sqlite; sourceTree = "<group>"; };
 		43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentGridView.swift; sourceTree = "<group>"; };
 		4A35F3581B65823A6AD49BE4 /* PlatformImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformImage.swift; sourceTree = "<group>"; };
 		4E0B692BC5F2567C6326B828 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
@@ -101,12 +104,13 @@
 		64C85E9D97904A9E574010CC /* SearchHit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHit.swift; sourceTree = "<group>"; };
 		6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iMessageArchiverApp.swift; sourceTree = "<group>"; };
 		6E8E31A7E21A457107F59541 /* Monogram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Monogram.swift; sourceTree = "<group>"; };
+		74CD05F36D6FC47BEC5F56E3 /* attachments.tar */ = {isa = PBXFileReference; lastKnownFileType = archive.tar; path = attachments.tar; sourceTree = "<group>"; };
 		75F6817AC430A04F3F777679 /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
 		7B250064158475CE1BF99180 /* iMessageArchiver.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iMessageArchiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E12516BD19964BC078F6966 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		821DD273186D880474C000C2 /* ArchiveReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveReader.swift; sourceTree = "<group>"; };
 		86A77DADCAE24BB8049D4CB3 /* Attachment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attachment.swift; sourceTree = "<group>"; };
 		8AF9A3B13CDE126C07084C05 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		8B78D339147C6338F6B4DDA2 /* tiny.imarchive */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tiny.imarchive; path = Tests/Fixtures/tiny.imarchive; sourceTree = SOURCE_ROOT; };
 		90173C921BCBF27A4C06FE51 /* iMessageArchiverMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iMessageArchiverMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91874023B0C17B1B3CCA45DE /* TarReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarReaderTests.swift; sourceTree = "<group>"; };
 		91A2A1BB88D9A2B2044A1929 /* ReactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactionsView.swift; sourceTree = "<group>"; };
@@ -156,7 +160,7 @@
 		0D5057BCA30AE8BEF3533E2B /* Fixtures */ = {
 			isa = PBXGroup;
 			children = (
-				8B78D339147C6338F6B4DDA2 /* tiny.imarchive */,
+				AC2F0C5483B0E44091EAD6E7 /* tiny.imarchive */,
 			);
 			path = Fixtures;
 			sourceTree = "<group>";
@@ -254,6 +258,16 @@
 				9509D46A3AAD2D95E947E757 /* iMessageArchiverMacApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		AC2F0C5483B0E44091EAD6E7 /* tiny.imarchive */ = {
+			isa = PBXGroup;
+			children = (
+				3FA2067EA4564ED05E892A99 /* archive.sqlite */,
+				74CD05F36D6FC47BEC5F56E3 /* attachments.tar */,
+				7E12516BD19964BC078F6966 /* manifest.json */,
+			);
+			path = tiny.imarchive;
 			sourceTree = "<group>";
 		};
 		DD5A187EB24D58CEAB3E488D /* Products */ = {
@@ -416,7 +430,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				565E76F6CF9347945C4FF9D5 /* tiny.imarchive in Resources */,
+				FE956C7FA22A752A3EDD7C26 /* archive.sqlite in Resources */,
+				A20ADDEE8F3F90ED379C0FCA /* attachments.tar in Resources */,
+				2126BFB5B99BCF1E574C434E /* manifest.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

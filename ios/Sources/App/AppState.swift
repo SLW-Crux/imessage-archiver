@@ -1,6 +1,13 @@
 import Foundation
 import Observation
 
+/// Mutable holder so a @MainActor class can keep an NSObjectProtocol
+/// observer that's set in init and torn down in deinit without
+/// resorting to `nonisolated(unsafe)` on the stored property.
+private final class ObserverBox: @unchecked Sendable {
+    var token: NSObjectProtocol?
+}
+
 @Observable
 @MainActor
 final class AppState {
@@ -8,16 +15,14 @@ final class AppState {
     var reader: ArchiveReader?
     var loadError: Error?
 
-    // nonisolated(unsafe) because `deinit` is implicitly nonisolated and
-    // needs to remove the observer. NotificationCenter.removeObserver is
-    // thread-safe so this is safe in practice.
-    // `nonisolated(unsafe)` required because `deinit` is implicitly
-    // nonisolated and needs to access this property to remove the
-    // observer. Plain `nonisolated` only applies to `let`.
-    nonisolated(unsafe) private var refreshObserver: NSObjectProtocol?
+    // `let`-held box is implicitly Sendable-accessible from the
+    // nonisolated `deinit`. The previous direct `nonisolated(unsafe)
+    // var` triggered Swift 6's "has no effect" warning whose
+    // suggested fix (plain nonisolated) doesn't compile for var.
+    private let observerBox = ObserverBox()
 
     init() {
-        refreshObserver = NotificationCenter.default.addObserver(
+        observerBox.token = NotificationCenter.default.addObserver(
             forName: .archiveBundleDidChange,
             object: nil,
             queue: .main
@@ -30,8 +35,8 @@ final class AppState {
     }
 
     deinit {
-        if let refreshObserver {
-            NotificationCenter.default.removeObserver(refreshObserver)
+        if let token = observerBox.token {
+            NotificationCenter.default.removeObserver(token)
         }
     }
 

@@ -44,7 +44,9 @@ final class iCloudCoordinator {
     private let tokenLock = NSLock()
     private var lastProcessedToken: UInt64 = 0
 
-    private func mintEventToken() -> UInt64 {
+    // nonisolated because queryDidUpdate (the only caller) runs on whatever
+    // dispatch queue NSMetadataQuery uses, not on the MainActor.
+    private nonisolated func mintEventToken() -> UInt64 {
         tokenLock.lock()
         defer { tokenLock.unlock() }
         nextEventToken &+= 1

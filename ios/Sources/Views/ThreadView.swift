@@ -51,7 +51,7 @@ struct ThreadView: View {
             }
         }
         .navigationTitle(chat.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .platformInlineTitle()
         .overlay {
             if isLoading {
                 ProgressView()

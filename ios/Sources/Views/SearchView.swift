@@ -24,7 +24,7 @@ struct SearchView: View {
             }
         }
         .navigationTitle("Search")
-        .navigationBarTitleDisplayMode(.inline)
+        .platformInlineTitle()
         .searchable(text: $query, prompt: "Search messages")
         .onChange(of: query) { _, newValue in
             searchTask?.cancel()

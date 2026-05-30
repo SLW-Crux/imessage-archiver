@@ -54,17 +54,17 @@ struct AttachmentThumbnailView: View {
     let cache: AttachmentCache
     let tarReader: TarReader?
 
-    @State private var thumbnail: UIImage?
+    @State private var thumbnail: PlatformImage?
     @State private var isLoading = false
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color.platformSecondaryBackground)
                 .frame(width: 80, height: 80)
 
             if let thumb = thumbnail {
-                Image(uiImage: thumb)
+                Image(platformImage: thumb)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 80, height: 80)
@@ -125,7 +125,7 @@ struct AttachmentThumbnailView: View {
         isLoading = true
         if let url = try? await cache.url(for: attachment, tarReader: tarReader),
            let data = try? Data(contentsOf: url),
-           let img = UIImage(data: data) {
+           let img = PlatformImage(data: data) {
             thumbnail = img
         }
         isLoading = false

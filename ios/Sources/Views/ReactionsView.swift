@@ -31,7 +31,7 @@ struct ReactionsView: View {
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 3)
-                .background(Color(.tertiarySystemBackground))
+                .background(Color.platformTertiaryBackground)
                 .clipShape(Capsule())
             }
         }

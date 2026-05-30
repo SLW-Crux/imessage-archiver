@@ -92,7 +92,7 @@ struct MessageBubbleView: View {
     }
 
     private var bubbleColor: Color {
-        message.isFromMe ? .blue : Color(.secondarySystemBackground)
+        message.isFromMe ? .blue : Color.platformSecondaryBackground
     }
 
     private var accessibilityText: String {

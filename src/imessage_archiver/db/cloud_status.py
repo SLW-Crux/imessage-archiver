@@ -15,6 +15,33 @@ has Messages in iCloud on AND those attachments are cloud-only — they
 exist in Apple's CloudKit servers but were evicted from the local Mac
 to save disk space. The archiver can only see local files; cloud-only
 attachments will be classified MISSING and lost from the bundle.
+
+Why there's no built-in "fetch from iCloud" helper:
+
+We tried building one (the deleted core/icloud_prefetch.py) that drove
+Messages.app via AppleScript / System Events to trigger CloudKit fetches.
+On macOS 26 (Tahoe) it didn't work because:
+
+- ``System Events → process "Messages"`` introspection returns
+  ``AppleEvent timed out`` (-1712) — Apple has progressively locked
+  down third-party UI scripting of first-party apps.
+- ``tell application "Messages" to count chats`` hangs indefinitely —
+  Messages.app's native AppleScript dictionary has been gutted over
+  the last few macOS versions.
+
+Apple's official paths that USED to work also no longer do reliably:
+
+- Toggling off "Messages in iCloud" in Messages → Settings used to
+  trigger a "Download Messages from iCloud" dialog. On macOS 26 the
+  dialog doesn't appear and no download happens.
+- System Settings → iCloud → Manage Storage → Messages: even when
+  this exposes a download action, users report it does not download
+  the full history reliably.
+
+So the warning in cli/commands.py honestly tells users the only routes
+that DO work: request a data export from Apple, or take an encrypted
+iPhone backup and parse it with a third-party tool. Both are outside
+this project's scope.
 """
 
 from __future__ import annotations

@@ -43,7 +43,7 @@ final class iCloudCoordinator {
     // `nextEventToken` is only mutated under `tokenLock` (see mintEventToken).
     // `nonisolated(unsafe)` was overkill: it's never accessed outside the lock.
     private nonisolated let tokenLock = NSLock()
-    private nonisolated(unsafe) var nextEventToken: UInt64 = 0
+    private nonisolated var nextEventToken: UInt64 = 0
     private var lastProcessedToken: UInt64 = 0
 
     // nonisolated because queryDidUpdate (the only caller) runs on whatever

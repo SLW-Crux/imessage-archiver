@@ -37,8 +37,8 @@ err_console = Console(stderr=True, style="bold red")
 # iCloud ubiquity container so the iOS app's NSMetadataQueryUbiquitousDocumentsScope
 # can discover the bundle. Writing to generic iCloud Drive (com~apple~CloudDocs)
 # would put the bundle in a scope iOS cannot enumerate.
-_IOS_BUNDLE_ID = "com.slw.imessage-archiver"
-_ICLOUD_CONTAINER = f"iCloud~{_IOS_BUNDLE_ID.replace('.', '~')}"  # iCloud~com~slw~imessage-archiver
+_MAC_CONTAINER_ID = "com.honk.imsgarchiver-mac"
+_ICLOUD_CONTAINER = f"iCloud~{_MAC_CONTAINER_ID.replace('.', '~')}"  # iCloud~com~honk~imsgarchiver-mac (Mac archiver writes here)
 _DEFAULT_DEST = (
     Path.home() / "Library" / "Mobile Documents" / _ICLOUD_CONTAINER / "Documents" / "archive.imarchive"
 )

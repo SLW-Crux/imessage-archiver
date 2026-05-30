@@ -4,7 +4,7 @@
 <dict>
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
     <key>com.apple.developer.icloud-services</key>
     <array>
@@ -12,24 +12,8 @@
     </array>
     <key>com.apple.developer.ubiquity-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
-    <!--
-        App Sandbox is intentionally DISABLED for the Mac target.
-
-        Reason: a sandboxed Mac app cannot use raw POSIX open() on files
-        inside the iCloud-managed Mobile Documents/ tree, even with the
-        ubiquity-container entitlement. SQLite (via GRDB) does raw open
-        and fails with SQLITE_CANTOPEN. The proper fix would be to wrap
-        all DB access in NSFileCoordinator; until that lands, the Mac
-        app runs un-sandboxed.
-
-        Trade-offs:
-        - No Mac App Store distribution (sandbox is mandatory there).
-        - Still signed by the user's Apple Developer Team ID. Notarisation
-          is still possible.
-        - The app is read-only against the bundle; no security regression
-          beyond losing sandbox-induced isolation.
-    -->
+    <!-- App Sandbox intentionally disabled — see entitlements file for rationale. -->
 </dict>
 </plist>

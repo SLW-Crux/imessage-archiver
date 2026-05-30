@@ -16,7 +16,7 @@ cat > iMessageArchiver.entitlements <<'EOF'
 <dict>
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver</string>
     </array>
     <key>com.apple.developer.icloud-services</key>
     <array>
@@ -24,7 +24,7 @@ cat > iMessageArchiver.entitlements <<'EOF'
     </array>
     <key>com.apple.developer.ubiquity-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver</string>
     </array>
 </dict>
 </plist>
@@ -37,7 +37,7 @@ cat > iMessageArchiverMac.entitlements <<'EOF'
 <dict>
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
     <key>com.apple.developer.icloud-services</key>
     <array>
@@ -45,7 +45,7 @@ cat > iMessageArchiverMac.entitlements <<'EOF'
     </array>
     <key>com.apple.developer.ubiquity-container-identifiers</key>
     <array>
-        <string>iCloud.com.slw.imessage-archiver</string>
+        <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
     <!-- App Sandbox intentionally disabled — see entitlements file for rationale. -->
 </dict>

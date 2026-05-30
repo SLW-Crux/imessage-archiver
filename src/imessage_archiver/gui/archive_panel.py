@@ -26,8 +26,8 @@ from imessage_archiver.gui.workers import ArchiveWorker
 # Must mirror cli.commands._DEFAULT_DEST. The iOS reader's NSMetadataQuery
 # only sees files under its own ubiquity container Documents/ folder, so the
 # Mac archiver writes there (not generic iCloud Drive).
-_IOS_BUNDLE_ID = "com.slw.imessage-archiver"
-_ICLOUD_CONTAINER = f"iCloud~{_IOS_BUNDLE_ID.replace('.', '~')}"
+_MAC_CONTAINER_ID = "com.honk.imsgarchiver-mac"
+_ICLOUD_CONTAINER = f"iCloud~{_MAC_CONTAINER_ID.replace('.', '~')}"
 _DEFAULT_DEST = (
     Path.home() / "Library" / "Mobile Documents" / _ICLOUD_CONTAINER / "Documents" / "archive.imarchive"
 )

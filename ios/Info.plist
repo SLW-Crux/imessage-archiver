@@ -22,7 +22,7 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.slw.imessage-archiver</key>
+		<key>iCloud.com.honk.imsgarchiver</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>

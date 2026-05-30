@@ -2,7 +2,16 @@ import Foundation
 import Observation
 import os
 
-private let kContainerID = "iCloud.com.slw.imessage-archiver"
+// iOS and Mac use distinct iCloud containers per Apple Developer
+// account setup. The Mac archiver writes into the -mac container; the
+// iOS reader reads from the no-suffix container. They don't share data
+// directly — the bundle is moved across by the user via iCloud Drive
+// (or copied) until/unless we add a sync helper.
+#if os(macOS)
+private let kContainerID = "iCloud.com.honk.imsgarchiver-mac"
+#else
+private let kContainerID = "iCloud.com.honk.imsgarchiver"
+#endif
 private let kBundleName  = "archive.imarchive"
 
 @Observable

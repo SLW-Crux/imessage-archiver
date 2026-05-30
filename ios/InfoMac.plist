@@ -24,12 +24,12 @@
 	<string>14.0</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.slw.imessage-archiver</key>
+		<key>iCloud.com.honk.imsgarchiver-mac</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>
 			<key>NSUbiquitousContainerName</key>
-			<string>iMessage Archiver</string>
+			<string>Honk iMessage Archiver</string>
 			<key>NSUbiquitousContainerSupportedFolderLevels</key>
 			<string>Any</string>
 		</dict>

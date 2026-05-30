@@ -1,6 +1,6 @@
 name: iMessageArchiver
 options:
-  bundleIdPrefix: com.slw
+  bundleIdPrefix: com.honk
   deploymentTarget:
     iOS: "17.0"
     macOS: "14.0"
@@ -36,7 +36,7 @@ targets:
   iMessageArchiver:
     type: application
     platform: iOS
-    bundleId: com.slw.imessage-archiver
+    bundleId: com.honk.imsgarchiver
     deploymentTarget: "17.0"
     sources:
       - path: Sources
@@ -61,7 +61,7 @@ targets:
         UILaunchScreen:
           UIColorName: ""
         NSUbiquitousContainers:
-          iCloud.com.slw.imessage-archiver:
+          iCloud.com.honk.imsgarchiver:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: iMessage Archiver
             NSUbiquitousContainerSupportedFolderLevels: Any
@@ -87,12 +87,12 @@ targets:
         cloudKit: false
         iCloudDocuments: true
         customContainers:
-          - iCloud.com.slw.imessage-archiver
+          - iCloud.com.honk.imsgarchiver
 
   iMessageArchiverMac:
     type: application
     platform: macOS
-    bundleId: com.slw.imessage-archiver-mac
+    bundleId: com.honk.imsgarchiver-mac
     deploymentTarget: "14.0"
     sources:
       - path: Sources
@@ -111,9 +111,9 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: "14.0"
         NSUbiquitousContainers:
-          iCloud.com.slw.imessage-archiver:
+          iCloud.com.honk.imsgarchiver-mac:
             NSUbiquitousContainerIsDocumentScopePublic: true
-            NSUbiquitousContainerName: iMessage Archiver
+            NSUbiquitousContainerName: Honk iMessage Archiver
             NSUbiquitousContainerSupportedFolderLevels: Any
     settings:
       base:
@@ -128,12 +128,12 @@ targets:
         cloudKit: false
         iCloudDocuments: true
         customContainers:
-          - iCloud.com.slw.imessage-archiver
+          - iCloud.com.honk.imsgarchiver-mac
 
   iMessageArchiverTests:
     type: bundle.unit-test
     platform: iOS
-    bundleId: com.slw.imessage-archiver.tests
+    bundleId: com.honk.imsgarchiver.tests
     sources:
       - path: Tests
         excludes:

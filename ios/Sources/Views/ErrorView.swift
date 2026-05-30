@@ -14,7 +14,7 @@ struct ErrorView: View {
         VStack(spacing: 16) {
             Image(systemName: error.summary.sfSymbol)
                 .font(.system(size: 48))
-                .foregroundStyle(error.isRecoverable ? .secondary : .red)
+                .foregroundStyle(error.isRecoverable ? Color.secondary : Color.red)
                 .symbolRenderingMode(.hierarchical)
                 .accessibilityHidden(true)
 

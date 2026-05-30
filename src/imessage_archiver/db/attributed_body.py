@@ -1,16 +1,23 @@
 """Parser for the attributedBody BLOB column in chat.db.
 
 On macOS 10.13+ many messages store their text in the ``attributedBody``
-column as a bplist-wrapped NSAttributedString (NSKeyedArchiver format) rather
-than the plain ``text`` column.  This module extracts the raw UTF-8 string.
+column as a typedstream- or bplist-wrapped NSAttributedString rather than
+the plain ``text`` column.  This module extracts the raw UTF-8 string.
 
 Strategy
 --------
-We use a pure-Python bplist parser followed by a recursive scan for the
-``NSString`` value inside the NSKeyedArchiver graph.  We do NOT rely on
-PyObjC here so the code works in CI and in unit tests without a macOS GUI
-session.  If we cannot decode the blob we return ``None`` and the caller
-treats the message as attachment-only.
+1. **PyObjC NSUnarchiver** (preferred — handles both typedstream and
+   NSKeyedArchiver formats natively, exactly as Messages.app does).
+   Only available on macOS at runtime.
+2. **Pure-Python bplist parser** (fallback for NSKeyedArchiver-format
+   bodies on non-macOS systems).
+3. **Pure-Python typedstream heuristic scan** (last-resort fallback for
+   typedstream-format bodies on non-macOS systems — known to miss text
+   for ~75% of real-world messages, but better than nothing).
+
+The pure-Python paths exist so CI runs on Linux runners can still parse
+synthetic bplist fixtures; production runs on macOS use the PyObjC path
+and recover the full text content.
 """
 
 from __future__ import annotations
@@ -24,6 +31,17 @@ from typing import Any
 # otherwise stall the archive process for minutes in the O(n²) typedstream
 # scan. 2 MiB is far above any legitimate message body.
 _MAX_BLOB_SIZE = 2 * 1024 * 1024
+
+# Try to set up the PyObjC-based decoder at import time. NSUnarchiver requires
+# AppKit to be imported so NSMutableAttributedString class registrations occur.
+_PYOBJC_AVAILABLE = False
+try:
+    import AppKit  # noqa: F401  registers NSAttributedString and friends
+    from Foundation import NSData, NSUnarchiver
+
+    _PYOBJC_AVAILABLE = True
+except Exception:
+    _PYOBJC_AVAILABLE = False
 
 
 def extract_text(blob: bytes) -> str | None:
@@ -39,14 +57,43 @@ def extract_text(blob: bytes) -> str | None:
         # and the typedstream scan is O(n) per byte (Sec-M3).
         return None
 
-    # The blob is either raw bplist data or a typedstream.
-    # Modern macOS (Ventura+) uses NSKeyedArchiver bplist format.
-    # Older macOS used the legacy typedstream format.
+    # 1. Preferred path: Apple's own NSUnarchiver. Handles BOTH the legacy
+    #    typedstream format and the NSKeyedArchiver bplist format. Solves
+    #    the truncation/None-return bugs in the pure-Python heuristic.
+    if _PYOBJC_AVAILABLE:
+        out = _from_pyobjc(blob)
+        if out is not None:
+            return out
+        # Fall through to pure-Python on PyObjC failure (e.g., malformed blob)
+
+    # 2. Pure-Python fallbacks. bplist for modern, typedstream for legacy.
     if blob[:6] == b"bplist":
         return _from_bplist(blob)
-
-    # Legacy typedstream: simpler binary format — scan for UTF-8 runs
     return _from_typedstream(blob)
+
+
+def _from_pyobjc(blob: bytes) -> str | None:
+    """Decode via Apple's NSUnarchiver. Returns the .string of the
+    NSAttributedString or None if decode fails. Only called when PyObjC
+    is available."""
+    try:
+        data = NSData.dataWithBytes_length_(blob, len(blob))
+        unarchiver = NSUnarchiver.alloc().initForReadingWithData_(data)
+        obj = unarchiver.decodeObject()
+    except Exception:
+        return None
+    if obj is None:
+        return None
+    # NSAttributedString.string() returns the plain text. Some encoded objects
+    # may be plain NSString — guard with hasattr.
+    try:
+        s = obj.string() if hasattr(obj, "string") else obj
+    except Exception:
+        return None
+    if not s:
+        return None
+    out = str(s)
+    return out if out else None
 
 
 def _from_bplist(blob: bytes) -> str | None:

@@ -38,10 +38,18 @@ Apple's official paths that USED to work also no longer do reliably:
   this exposes a download action, users report it does not download
   the full history reliably.
 
+Apple's privacy data export (privacy.apple.com → "Get a copy of your
+data") was also briefly recommended but DOES NOT include iMessage
+content. Apple's stated reason is end-to-end encryption; their Legal
+Process Guidelines back this up — they return only iMessage lookup
+metadata, never message content, even to law enforcement.
+
 So the warning in cli/commands.py honestly tells users the only routes
-that DO work: request a data export from Apple, or take an encrypted
-iPhone backup and parse it with a third-party tool. Both are outside
-this project's scope.
+that have any real chance of recovering more: running the archiver on
+the user's primary Messages device (which often has a higher local
+cache hit rate), or extracting from an unencrypted Finder iPhone backup
+with a tool like imessage-exporter. Both are outside this project's
+scope. Detection + manifest fields are what we can reliably ship.
 """
 
 from __future__ import annotations

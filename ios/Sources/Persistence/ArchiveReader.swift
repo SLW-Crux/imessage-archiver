@@ -3,11 +3,14 @@ import GRDB
 
 enum ArchiveReaderError: Error, LocalizedError {
     case schemaTooNew(found: Int, max: Int)
+    case openFailed(String)
 
     var errorDescription: String? {
         switch self {
         case .schemaTooNew(let found, let max):
             return "Archive schema version \(found) is newer than this app supports (\(max)). Update the iOS reader."
+        case .openFailed(let details):
+            return "Could not open archive: \(details)"
         }
     }
 }
@@ -46,7 +49,45 @@ final class ArchiveReader: Sendable {
         let sqliteURL = bundleURL.appendingPathComponent("archive.sqlite")
         var config = Configuration()
         config.readonly = true
-        self.dbQueue = try DatabaseQueue(path: sqliteURL.path, configuration: config)
+
+        // Open through NSFileCoordinator. SQLite (via GRDB) does raw
+        // POSIX open() and sqlite3_step(); without coordination, files
+        // inside ~/Library/Mobile Documents/iCloud~*/ can fail with
+        // SQLITE_CANTOPEN on the first schema read even when the bytes
+        // are physically present and a sqlite3 CLI opens the same path
+        // fine. Coordination tells the iCloud daemon to make the file
+        // available to this process for the duration of the open.
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinationError: NSError?
+        var openedQueue: DatabaseQueue?
+        var openError: Error?
+
+        coordinator.coordinate(
+            readingItemAt: sqliteURL,
+            options: [.resolvesSymbolicLink],
+            error: &coordinationError
+        ) { coordinatedURL in
+            do {
+                openedQueue = try DatabaseQueue(
+                    path: coordinatedURL.path,
+                    configuration: config
+                )
+            } catch {
+                openError = error
+            }
+        }
+        if let coordinationError {
+            throw coordinationError
+        }
+        if let openError {
+            throw openError
+        }
+        guard let openedQueue else {
+            throw ArchiveReaderError.openFailed(
+                "NSFileCoordinator returned without an opened DatabaseQueue"
+            )
+        }
+        self.dbQueue = openedQueue
     }
 
     func chats() async throws -> [Chat] {

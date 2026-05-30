@@ -230,8 +230,18 @@ struct AttachmentThumbnailView: View {
 
     private static func platformImage(from cg: CGImage) -> PlatformImage? {
         #if os(macOS)
-        return NSImage(cgImage: cg, size: .zero)
+        // `size: .zero` gives the NSImage no intrinsic dimensions, which
+        // makes SwiftUI's `.scaledToFill()` produce a zero-sized result
+        // because the aspect-ratio math has nothing to compute from —
+        // the Mac UI renders an empty thumbnail. Pass the CGImage's
+        // actual pixel dimensions so layout can scale correctly.
+        return NSImage(
+            cgImage: cg,
+            size: NSSize(width: cg.width, height: cg.height)
+        )
         #else
+        // UIImage already uses CGImage's pixel dimensions as the
+        // intrinsic size by default — no equivalent fix needed on iOS.
         return UIImage(cgImage: cg)
         #endif
     }

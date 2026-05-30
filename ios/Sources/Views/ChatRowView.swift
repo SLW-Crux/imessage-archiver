@@ -31,6 +31,12 @@ struct ChatRowView: View {
                         .chatPreviewStyle()
                 }
             }
+            // Claim the full remaining row width so the inner HStack's
+            // Spacer actually has room to expand. Without this the VStack
+            // hugged its content, leaving the timestamp pinned right
+            // beside the title with empty trailing whitespace instead of
+            // at the row's trailing edge like Mail.app.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 6)
         .frame(minHeight: Spacing.rowHeight)

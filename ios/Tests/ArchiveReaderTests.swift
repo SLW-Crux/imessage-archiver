@@ -32,6 +32,25 @@ final class ArchiveReaderTests: XCTestCase {
         try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: bundleURL, to: workingBundleURL)
 
+        // Diagnostic: surface the actual bundle contents in the test
+        // failure message so we can see whether the folder reference is
+        // empty (xcodegen / Xcode misbundling), whether archive.sqlite
+        // is present, or whether something else broke between bundle
+        // generation and test runtime.
+        let contents = (try? FileManager.default.contentsOfDirectory(
+            at: workingBundleURL,
+            includingPropertiesForKeys: [.fileSizeKey]
+        )) ?? []
+        let listing = contents.map { url -> String in
+            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            return "\(url.lastPathComponent) (\(size) bytes)"
+        }.joined(separator: ", ")
+        XCTAssertTrue(
+            contents.contains { $0.lastPathComponent == "archive.sqlite" },
+            "Copied bundle missing archive.sqlite. Contents: [\(listing)]. " +
+            "Source bundle URL: \(bundleURL.path)"
+        )
+
         reader = try ArchiveReader(bundleURL: workingBundleURL)
     }
 

@@ -14,6 +14,9 @@ struct ErrorView: View {
         VStack(spacing: 16) {
             Image(systemName: error.summary.sfSymbol)
                 .font(.system(size: 48))
+                // Both branches typed as Color so the ternary doesn't pin
+                // its result to HierarchicalShapeStyle (which `.secondary`
+                // resolves to first) and then refuse `.red`.
                 .foregroundStyle(error.isRecoverable ? Color.secondary : Color.red)
                 .symbolRenderingMode(.hierarchical)
                 .accessibilityHidden(true)

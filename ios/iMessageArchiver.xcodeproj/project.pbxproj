@@ -37,9 +37,11 @@
 		6556E107D86EF425B9E9D4C7 /* Attachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A77DADCAE24BB8049D4CB3 /* Attachment.swift */; };
 		6CD6544C9E3E7492A21AE4BA /* ChatRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9FF0D63C62871D4619B1ECB /* ChatRowView.swift */; };
 		72A280A5A4B21AFBF3C6141D /* ReactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A2A1BB88D9A2B2044A1929 /* ReactionsView.swift */; };
+		74082E0AD69A99A1C431E0F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6339888AC50CF09276BDC2AB /* Assets.xcassets */; };
 		752C5B4E20BC567363C60337 /* ArchiveReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821DD273186D880474C000C2 /* ArchiveReader.swift */; };
 		76947C3AFC132C0E21510144 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CCC8E8F50C965564FB672C /* AppState.swift */; };
 		792CDE7192D4557ED9D3ECAA /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5178B9E0F0DCA909252D77 /* ErrorView.swift */; };
+		7C712BBD5E96E0FFC364A9E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6339888AC50CF09276BDC2AB /* Assets.xcassets */; };
 		81DC55BD18579CD2EBAAA730 /* ArchiveError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCB24E02F5F74457705FB27 /* ArchiveError.swift */; };
 		831C1B3421AA5A85F517F58D /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5178B9E0F0DCA909252D77 /* ErrorView.swift */; };
 		866ED643AAC2036D8EADE786 /* Thumbnailer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79A6136B490295EEE13264D /* Thumbnailer.swift */; };
@@ -64,7 +66,6 @@
 		D4C41BE680BB17DC9F0892B3 /* ArchiveError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCB24E02F5F74457705FB27 /* ArchiveError.swift */; };
 		D90C71E36B1A1A0135133490 /* SmartArchiveStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59595894EC167BDBD1D4D32F /* SmartArchiveStyle.swift */; };
 		DA00B377EEB0FA0D04025CC7 /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54ED66CB76580292C8852271 /* MessageBubbleView.swift */; };
-		DB45E32F63EFA00E3468A4AF /* archive.sqlite-shm in Resources */ = {isa = PBXBuildFile; fileRef = 40F8E10D5C842ECBAE016CDB /* archive.sqlite-shm */; };
 		DFFD013786D3F7D8C40C33C4 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6817AC430A04F3F777679 /* ChatListView.swift */; };
 		EA5E76539767ED8FC072523D /* AttachmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */; };
 		F2747F6856BAAF0343DAD42D /* PlatformNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CD3269F8BBA9911F57E3B1 /* PlatformNavigation.swift */; };
@@ -92,7 +93,6 @@
 		2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudCoordinator.swift; sourceTree = "<group>"; };
 		3F30103889EF3C337C9E8BF4 /* ArchiveManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveManifest.swift; sourceTree = "<group>"; };
 		3FA2067EA4564ED05E892A99 /* archive.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = archive.sqlite; sourceTree = "<group>"; };
-		40F8E10D5C842ECBAE016CDB /* archive.sqlite-shm */ = {isa = PBXFileReference; path = "archive.sqlite-shm"; sourceTree = "<group>"; };
 		43E6943BEC5B5010B2F175A7 /* AttachmentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentGridView.swift; sourceTree = "<group>"; };
 		4A35F3581B65823A6AD49BE4 /* PlatformImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformImage.swift; sourceTree = "<group>"; };
 		4E0B692BC5F2567C6326B828 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
@@ -100,6 +100,7 @@
 		5327F4A7DB0B4FA7BC80895B /* TarReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarReader.swift; sourceTree = "<group>"; };
 		54ED66CB76580292C8852271 /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 		59595894EC167BDBD1D4D32F /* SmartArchiveStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartArchiveStyle.swift; sourceTree = "<group>"; };
+		6339888AC50CF09276BDC2AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		64C85E9D97904A9E574010CC /* SearchHit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHit.swift; sourceTree = "<group>"; };
 		6DA3E393326E18DB1A0BA99D /* iMessageArchiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iMessageArchiverApp.swift; sourceTree = "<group>"; };
 		6E8E31A7E21A457107F59541 /* Monogram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Monogram.swift; sourceTree = "<group>"; };
@@ -263,7 +264,6 @@
 			isa = PBXGroup;
 			children = (
 				3FA2067EA4564ED05E892A99 /* archive.sqlite */,
-				40F8E10D5C842ECBAE016CDB /* archive.sqlite-shm */,
 				74CD05F36D6FC47BEC5F56E3 /* attachments.tar */,
 				7E12516BD19964BC078F6966 /* manifest.json */,
 			);
@@ -280,9 +280,18 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E6692B8C0201F7F1EDE46BBB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				6339888AC50CF09276BDC2AB /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		F46B2085BF79DC02817EDE93 = {
 			isa = PBXGroup;
 			children = (
+				E6692B8C0201F7F1EDE46BBB /* Resources */,
 				227F335FB281C5A400765A6F /* Sources */,
 				47D25FC7D7E099F6D4AD1321 /* Tests */,
 				DD5A187EB24D58CEAB3E488D /* Products */,
@@ -297,6 +306,7 @@
 			buildConfigurationList = 4A1234C46920A5C25649D880 /* Build configuration list for PBXNativeTarget "iMessageArchiver" */;
 			buildPhases = (
 				B48D0A411BA4BE804893294C /* Sources */,
+				295D6F21B6B81680A3626629 /* Resources */,
 				407505FF3FE4CD709A76717A /* Frameworks */,
 			);
 			buildRules = (
@@ -337,6 +347,7 @@
 			buildConfigurationList = 8F4E7E21F14FE2CF2C0379A0 /* Build configuration list for PBXNativeTarget "iMessageArchiverMac" */;
 			buildPhases = (
 				A4561FAD4372F9B84EFF90F1 /* Sources */,
+				89D88C1A06BE4491F9F16A07 /* Resources */,
 				A22E9DB9B51C1C41AC703E2D /* Frameworks */,
 			);
 			buildRules = (
@@ -399,12 +410,27 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		295D6F21B6B81680A3626629 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C712BBD5E96E0FFC364A9E1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		89D88C1A06BE4491F9F16A07 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74082E0AD69A99A1C431E0F6 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA3CBDD6F4BD0C99AEF4EFC5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				FE956C7FA22A752A3EDD7C26 /* archive.sqlite in Resources */,
-				DB45E32F63EFA00E3468A4AF /* archive.sqlite-shm in Resources */,
 				A20ADDEE8F3F90ED379C0FCA /* attachments.tar in Resources */,
 				2126BFB5B99BCF1E574C434E /* manifest.json in Resources */,
 			);
@@ -541,10 +567,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7V698GFQCM;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -554,6 +582,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZED_STRING_SWIFTUI_SUPPORT = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -713,10 +742,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 7V698GFQCM;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -732,6 +763,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZED_STRING_SWIFTUI_SUPPORT = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;

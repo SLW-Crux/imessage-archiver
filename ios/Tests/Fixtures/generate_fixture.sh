@@ -26,6 +26,20 @@ rm -rf "$BUNDLE"
 echo "==> Generating $BUNDLE from $PY_FIXTURE"
 imessage-archiver archive --source "$PY_FIXTURE" --dest "$BUNDLE"
 
+# Convert archive.sqlite from WAL to DELETE journal mode.
+# The Python archiver writes WAL by default. WAL-mode databases require
+# SQLite to manage -wal/-shm companion files at open time, and GRDB on
+# iOS simulator can't satisfy that (the test runner's sandbox refuses
+# the journal-file creation, yielding SQLITE_CANTOPEN even on a clean
+# tmp-dir copy). DELETE mode is the portable rollback-journal default
+# that opens cleanly in any process.
+#
+# VACUUM rewrites the file with the new journal_mode baked in. The
+# Mac app reads either mode fine — production archives can stay in
+# WAL — this conversion only applies to the test fixture.
+echo "==> Converting archive.sqlite WAL → DELETE (so iOS XCTest can open it)"
+sqlite3 "$BUNDLE/archive.sqlite" "PRAGMA journal_mode=DELETE; VACUUM;" > /dev/null
+
 echo ""
 echo "==> Fixture ready:"
 ls -lh "$BUNDLE"

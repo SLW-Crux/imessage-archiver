@@ -50,13 +50,37 @@ final class ArchiveReader: Sendable {
         var config = Configuration()
         config.readonly = true
 
-        // Open through NSFileCoordinator. SQLite (via GRDB) does raw
-        // POSIX open() and sqlite3_step(); without coordination, files
-        // inside ~/Library/Mobile Documents/iCloud~*/ can fail with
-        // SQLITE_CANTOPEN on the first schema read even when the bytes
-        // are physically present and a sqlite3 CLI opens the same path
-        // fine. Coordination tells the iCloud daemon to make the file
-        // available to this process for the duration of the open.
+        self.dbQueue = try Self.openDatabase(at: sqliteURL, configuration: config)
+    }
+
+    /// Two-phase open: try a direct GRDB open first, then fall back to
+    /// `NSFileCoordinator` if that fails.
+    ///
+    /// Direct open is what works for app-bundle resources (iOS test
+    /// fixture, future Mac App Store sandbox where bundle paths are not
+    /// iCloud-managed). NSFileCoordinator is what the Mac app needs for
+    /// SQLite files under ~/Library/Mobile Documents/iCloud~*/: SQLite
+    /// does raw POSIX `open()` + `sqlite3_step()`, and without
+    /// coordination the iCloud daemon hasn't materialized the file for
+    /// this process, yielding SQLITE_CANTOPEN even when the bytes are
+    /// physically present and `sqlite3 <path>` from the shell works.
+    ///
+    /// Doing the coordinator wrap unconditionally broke iOS tests: the
+    /// fixture lives in the test bundle, the simulator's sandbox treats
+    /// it as a non-document resource, and the coordinated open yields
+    /// SQLITE_CANTOPEN. Two-phase keeps both targets happy without an
+    /// `#if os(macOS)` split.
+    private static func openDatabase(
+        at sqliteURL: URL,
+        configuration: Configuration
+    ) throws -> DatabaseQueue {
+        if let direct = try? DatabaseQueue(
+            path: sqliteURL.path,
+            configuration: configuration
+        ) {
+            return direct
+        }
+
         let coordinator = NSFileCoordinator(filePresenter: nil)
         var coordinationError: NSError?
         var openedQueue: DatabaseQueue?
@@ -70,7 +94,7 @@ final class ArchiveReader: Sendable {
             do {
                 openedQueue = try DatabaseQueue(
                     path: coordinatedURL.path,
-                    configuration: config
+                    configuration: configuration
                 )
             } catch {
                 openError = error
@@ -87,7 +111,7 @@ final class ArchiveReader: Sendable {
                 "NSFileCoordinator returned without an opened DatabaseQueue"
             )
         }
-        self.dbQueue = openedQueue
+        return openedQueue
     }
 
     func chats() async throws -> [Chat] {

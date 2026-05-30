@@ -79,6 +79,13 @@ targets:
     settings:
       base:
         PRODUCT_NAME: iMessageArchiver
+        # xcodegen 2.45.4 ignores the per-target `bundleId:` field for
+        # PRODUCT_BUNDLE_IDENTIFIER — it falls back to
+        # <bundleIdPrefix>.<targetName> which becomes the camelCase
+        # `com.honk.iMessageArchiver` rather than the explicit
+        # `com.honk.imsgarchiver`. Set it directly so the pbxproj
+        # matches what's registered at developer.apple.com.
+        PRODUCT_BUNDLE_IDENTIFIER: com.honk.imsgarchiver
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: GRDB
@@ -118,6 +125,10 @@ targets:
     settings:
       base:
         PRODUCT_NAME: iMessageArchiverMac
+        # Match developer.apple.com registration. xcodegen's `bundleId`
+        # alone isn't honored; explicit PRODUCT_BUNDLE_IDENTIFIER lands
+        # in pbxproj reliably.
+        PRODUCT_BUNDLE_IDENTIFIER: com.honk.imsgarchiver-mac
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Hardened Runtime is required for macOS apps that use iCloud.
         ENABLE_HARDENED_RUNTIME: YES
@@ -161,3 +172,5 @@ targets:
       base:
         DEVELOPMENT_TEAM: "7V698GFQCM"
         CODE_SIGN_STYLE: Automatic
+        # Match developer.apple.com registration. See iOS target for why.
+        PRODUCT_BUNDLE_IDENTIFIER: com.honk.imsgarchiver.tests

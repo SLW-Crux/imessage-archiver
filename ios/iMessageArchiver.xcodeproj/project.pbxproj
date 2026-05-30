@@ -640,7 +640,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiver;
+				PRODUCT_BUNDLE_IDENTIFIER = com.honk.imsgarchiver;
 				PRODUCT_NAME = iMessageArchiver;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -658,7 +658,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiverTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.honk.imsgarchiver.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iMessageArchiver.app/iMessageArchiver";
@@ -678,7 +678,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiverMac;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.honk.imsgarchiver-mac";
 				PRODUCT_NAME = iMessageArchiverMac;
 				SDKROOT = macosx;
 			};
@@ -696,7 +696,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiver;
+				PRODUCT_BUNDLE_IDENTIFIER = com.honk.imsgarchiver;
 				PRODUCT_NAME = iMessageArchiver;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -714,7 +714,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiverTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.honk.imsgarchiver.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iMessageArchiver.app/iMessageArchiver";
@@ -734,7 +734,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.honk.iMessageArchiverMac;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.honk.imsgarchiver-mac";
 				PRODUCT_NAME = iMessageArchiverMac;
 				SDKROOT = macosx;
 			};

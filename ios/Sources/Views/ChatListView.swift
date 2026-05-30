@@ -48,7 +48,7 @@ struct ChatListView: View {
                 ThreadView(chat: chat, reader: reader)
             }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .platformLeading) {
                     NavigationLink {
                         SearchView(reader: reader)
                     } label: {
@@ -56,7 +56,7 @@ struct ChatListView: View {
                             .accessibilityLabel("Search all messages")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .platformTrailing) {
                     NavigationLink {
                         ArchiveInfoView(manifest: reader.manifest)
                     } label: {

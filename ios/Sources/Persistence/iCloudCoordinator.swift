@@ -40,8 +40,10 @@ final class iCloudCoordinator {
     // The MainActor handler discards anything older than the highest
     // already-processed token so out-of-order @MainActor Task hops can't
     // overwrite a fresh `.ready` with a stale `.downloading` (H-14).
+    // `nextEventToken` is only mutated under `tokenLock` (see mintEventToken).
+    // `nonisolated(unsafe)` was overkill: it's never accessed outside the lock.
+    private nonisolated let tokenLock = NSLock()
     private nonisolated(unsafe) var nextEventToken: UInt64 = 0
-    private let tokenLock = NSLock()
     private var lastProcessedToken: UInt64 = 0
 
     // nonisolated because queryDidUpdate (the only caller) runs on whatever

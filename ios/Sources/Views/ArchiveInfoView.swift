@@ -23,7 +23,7 @@ struct ArchiveInfoView: View {
             }
         }
         .navigationTitle("Archive Info")
-        .navigationBarTitleDisplayMode(.inline)
+        .platformInlineTitle()
     }
 
     private func row(_ label: String, value: String) -> some View {

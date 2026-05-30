@@ -8,7 +8,10 @@ final class AppState {
     var reader: ArchiveReader?
     var loadError: Error?
 
-    private var refreshObserver: NSObjectProtocol?
+    // nonisolated(unsafe) because `deinit` is implicitly nonisolated and
+    // needs to remove the observer. NotificationCenter.removeObserver is
+    // thread-safe so this is safe in practice.
+    nonisolated(unsafe) private var refreshObserver: NSObjectProtocol?
 
     init() {
         refreshObserver = NotificationCenter.default.addObserver(

@@ -7,6 +7,18 @@ struct ChatListView: View {
     @State private var isLoading = true
     @State private var loadError: String?
 
+    /// Driving selection state for macOS NavigationSplitView. Unused on iOS,
+    /// where row taps push via NavigationLink(value:).
+    @State private var selection: SidebarDestination?
+
+    /// Sidebar destinations are typed so the same NavigationLink(value:)
+    /// works on both platforms and the macOS detail pane can switch over a
+    /// single optional.
+    enum SidebarDestination: Hashable {
+        case chat(Chat)
+        case searchAll
+    }
+
     private var filtered: [Chat] {
         guard !searchText.isEmpty else { return chats }
         let q = searchText.lowercased()
@@ -17,57 +29,138 @@ struct ChatListView: View {
     }
 
     var body: some View {
+        #if os(macOS)
+        NavigationSplitView {
+            sidebar
+                .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 420)
+        } detail: {
+            detail
+        }
+        // .sidebar placement puts the search field in the sidebar header
+        // (where Mail.app puts it), not the toolbar. This is the only
+        // search affordance — the previous toolbar magnifying-glass was
+        // the source of the dual-search redundancy AND the window-edge
+        // clipping flagged in the design review.
+        .searchable(text: $searchText, placement: .sidebar, prompt: "Search Conversations")
+        .task { await loadChats() }
+        #else
         NavigationStack {
-            Group {
-                if isLoading {
-                    ProgressView("Loading conversations…")
-                } else if let err = loadError {
-                    Text("Error: \(err)")
-                        .foregroundStyle(.red)
-                        .padding()
-                } else if filtered.isEmpty {
-                    ContentUnavailableView(
-                        searchText.isEmpty ? "No Conversations" : "No Results",
-                        systemImage: "bubble.left.and.bubble.right",
-                        description: Text(searchText.isEmpty
-                            ? "Your archive contains no conversations."
-                            : "No conversations match \"\(searchText)\".")
-                    )
-                } else {
-                    List(filtered) { chat in
-                        NavigationLink(value: chat) {
-                            ChatRowView(chat: chat)
-                        }
-                    }
-                    .listStyle(.plain)
-                }
-            }
-            .navigationTitle("Archive")
-            .searchable(text: $searchText, prompt: "Search conversations")
-            .navigationDestination(for: Chat.self) { chat in
-                ThreadView(chat: chat, reader: reader)
-            }
-            .toolbar {
-                ToolbarItem(placement: .platformLeading) {
-                    NavigationLink {
+            sidebar
+                .navigationDestination(for: SidebarDestination.self) { dest in
+                    switch dest {
+                    case .chat(let chat):
+                        ThreadView(chat: chat, reader: reader)
+                    case .searchAll:
                         SearchView(reader: reader)
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .accessibilityLabel("Search all messages")
                     }
                 }
-                ToolbarItem(placement: .platformTrailing) {
-                    NavigationLink {
-                        ArchiveInfoView(manifest: reader.manifest)
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .accessibilityLabel("Archive info")
+        }
+        .searchable(text: $searchText, prompt: "Search Conversations")
+        .task { await loadChats() }
+        #endif
+    }
+
+    @ViewBuilder
+    private var sidebar: some View {
+        Group {
+            if isLoading {
+                ProgressView("Loading conversations…")
+            } else if let err = loadError {
+                ContentUnavailableView(
+                    "Couldn’t Load Archive",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(err)
+                )
+            } else if filtered.isEmpty {
+                emptyState
+            } else {
+                chatList
+            }
+        }
+        .navigationTitle("Archive")
+        .toolbar {
+            ToolbarItem(placement: .platformTrailing) {
+                NavigationLink {
+                    ArchiveInfoView(manifest: reader.manifest)
+                } label: {
+                    Image(systemName: "info.circle")
+                        .accessibilityLabel("Archive info")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        if searchText.isEmpty {
+            ContentUnavailableView(
+                "No Conversations",
+                systemImage: "bubble.left.and.bubble.right",
+                description: Text("Your archive contains no conversations.")
+            )
+        } else {
+            // System-standard "No Results for "…"" copy, free.
+            ContentUnavailableView.search(text: searchText)
+        }
+    }
+
+    @ViewBuilder
+    private var chatList: some View {
+        #if os(macOS)
+        // List(selection:) binding drives the detail pane via NavigationLink(value:).
+        List(selection: $selection) {
+            Section {
+                NavigationLink(value: SidebarDestination.searchAll) {
+                    Label("Search All Messages", systemImage: "magnifyingglass")
+                }
+            }
+            Section("Conversations") {
+                ForEach(filtered) { chat in
+                    NavigationLink(value: SidebarDestination.chat(chat)) {
+                        ChatRowView(chat: chat)
                     }
                 }
             }
         }
-        .task { await loadChats() }
+        .listStyle(.sidebar)
+        #else
+        // On iOS, omit the selection: binding — non-nil selection adds
+        // edit-mode circles we don't want.
+        List {
+            Section {
+                NavigationLink(value: SidebarDestination.searchAll) {
+                    Label("Search All Messages", systemImage: "magnifyingglass")
+                }
+            }
+            Section("Conversations") {
+                ForEach(filtered) { chat in
+                    NavigationLink(value: SidebarDestination.chat(chat)) {
+                        ChatRowView(chat: chat)
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        #endif
     }
+
+    #if os(macOS)
+    @ViewBuilder
+    private var detail: some View {
+        switch selection {
+        case .chat(let chat):
+            ThreadView(chat: chat, reader: reader)
+        case .searchAll:
+            SearchView(reader: reader)
+        case nil:
+            ContentUnavailableView(
+                "No Conversation Selected",
+                systemImage: "bubble.left.and.bubble.right",
+                description: Text("Select a conversation from the sidebar to view its messages.")
+            )
+        }
+    }
+    #endif
 
     private func loadChats() async {
         isLoading = true

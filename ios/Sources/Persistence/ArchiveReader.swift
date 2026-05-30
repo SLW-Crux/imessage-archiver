@@ -53,33 +53,48 @@ final class ArchiveReader: Sendable {
         self.dbQueue = try Self.openDatabase(at: sqliteURL, configuration: config)
     }
 
-    /// Two-phase open: try a direct GRDB open first, then fall back to
-    /// `NSFileCoordinator` if that fails.
+    /// Open the archive's SQLite in immutable URI mode, wrapped in
+    /// NSFileCoordinator.
     ///
-    /// Direct open is what works for app-bundle resources (iOS test
-    /// fixture, future Mac App Store sandbox where bundle paths are not
-    /// iCloud-managed). NSFileCoordinator is what the Mac app needs for
-    /// SQLite files under ~/Library/Mobile Documents/iCloud~*/: SQLite
-    /// does raw POSIX `open()` + `sqlite3_step()`, and without
-    /// coordination the iCloud daemon hasn't materialized the file for
-    /// this process, yielding SQLITE_CANTOPEN even when the bytes are
-    /// physically present and `sqlite3 <path>` from the shell works.
+    /// Two production issues compounded here:
     ///
-    /// Doing the coordinator wrap unconditionally broke iOS tests: the
-    /// fixture lives in the test bundle, the simulator's sandbox treats
-    /// it as a non-document resource, and the coordinated open yields
-    /// SQLITE_CANTOPEN. Two-phase keeps both targets happy without an
-    /// `#if os(macOS)` split.
+    /// 1. The Mac archiver writes archive.sqlite in WAL journal mode.
+    ///    Opening a WAL database normally requires SQLite to create
+    ///    `-wal` and `-shm` companion files next to the SQLite. On iOS
+    ///    (simulator OR device) the sandbox refuses those creations
+    ///    inside the iCloud-managed Documents directory, even with
+    ///    `config.readonly = true`, yielding SQLITE_CANTOPEN. The same
+    ///    file opens fine in the sqlite3 CLI because that process has
+    ///    unrestricted file-creation rights.
+    ///
+    /// 2. Files inside ~/Library/Mobile Documents/iCloud~*/ aren't
+    ///    materialized for the process until NSFileCoordinator declares
+    ///    a read intent — without coordination GRDB's raw POSIX open()
+    ///    can fail on the first schema read even when the bytes are on
+    ///    disk.
+    ///
+    /// The fix is a URI open: `file:<path>?mode=ro&immutable=1` tells
+    /// SQLite (a) the file is read-only, and (b) immutable — skip ALL
+    /// journal/WAL management entirely, treat the file as a frozen
+    /// blob. SQLite then never tries to create or touch -wal/-shm.
+    /// URI handling requires sqlite3_open_v2 with SQLITE_OPEN_URI,
+    /// which GRDB enables by default — the `file:` prefix is enough.
+    ///
+    /// The coordinator wrap stays for case (2). It's a no-op for paths
+    /// outside iCloud (the test bundle's tmp copy, future App Store
+    /// sandboxed bundle paths) but is necessary for the Mac iCloud
+    /// case in production.
     private static func openDatabase(
         at sqliteURL: URL,
         configuration: Configuration
     ) throws -> DatabaseQueue {
-        if let direct = try? DatabaseQueue(
-            path: sqliteURL.path,
-            configuration: configuration
-        ) {
-            return direct
-        }
+        // Percent-encode the path so spaces and other URL-unsafe
+        // characters survive the URI parse. The path-encoded form is
+        // what sqlite3_open_v2 expects after the `file:` scheme.
+        let encoded = sqliteURL.path.addingPercentEncoding(
+            withAllowedCharacters: .urlPathAllowed
+        ) ?? sqliteURL.path
+        let uri = "file:\(encoded)?mode=ro&immutable=1"
 
         let coordinator = NSFileCoordinator(filePresenter: nil)
         var coordinationError: NSError?
@@ -90,10 +105,15 @@ final class ArchiveReader: Sendable {
             readingItemAt: sqliteURL,
             options: [.resolvesSymbolicLink],
             error: &coordinationError
-        ) { coordinatedURL in
+        ) { _ in
+            // Use the URI (constructed from the original sqliteURL.path),
+            // not coordinatedURL.path — SQLite needs the URI form, and
+            // the coordinator's coordinatedURL is the same file the
+            // original URL points at (the coordinate call only ensures
+            // availability, doesn't relocate).
             do {
                 openedQueue = try DatabaseQueue(
-                    path: coordinatedURL.path,
+                    path: uri,
                     configuration: configuration
                 )
             } catch {

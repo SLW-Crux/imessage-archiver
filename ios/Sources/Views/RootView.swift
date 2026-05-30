@@ -43,6 +43,16 @@ struct RootView: View {
     private func mainView(bundleURL: URL) -> some View {
         if let reader = appState.reader {
             ChatListView(reader: reader)
+        } else if let err = appState.loadError {
+            // Surface AppState.onBundleReady throws — previously the UI
+            // sat on "Opening archive…" indefinitely while loadError was
+            // set silently. This is the only place that error becomes
+            // visible to the user.
+            errorView(
+                message: "Could not open this archive bundle.\n\n"
+                    + "Path: \(bundleURL.path)\n\n"
+                    + "Error: \(err.localizedDescription)"
+            )
         } else {
             ProgressView("Opening archive…")
                 .task { appState.onBundleReady(bundleURL) }

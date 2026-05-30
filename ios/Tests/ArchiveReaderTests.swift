@@ -6,11 +6,20 @@ final class ArchiveReaderTests: XCTestCase {
     var reader: ArchiveReader!
 
     override func setUpWithError() throws {
-        // Use the fixture bundle checked into the Mac project's test fixtures.
-        // Copy tiny.imarchive into ios/Tests/Fixtures/ as part of build setup.
+        // tiny.imarchive must be generated before running this suite —
+        // either locally via ios/Tests/Fixtures/generate_fixture.sh or by
+        // CI's "Generate tiny.imarchive bundle for iOS tests" step.
+        //
+        // Previously this used XCTSkipIf, which made CI silently pass even
+        // when the fixture was missing. Now we assert hard so a missing
+        // fixture is loud, not silent.
         bundleURL = Bundle(for: type(of: self))
             .url(forResource: "tiny", withExtension: "imarchive")
-        try XCTSkipIf(bundleURL == nil, "tiny.imarchive fixture not found — skipping")
+        XCTAssertNotNil(
+            bundleURL,
+            "tiny.imarchive fixture not bundled. Run ios/Tests/Fixtures/generate_fixture.sh "
+                + "before re-running the test suite."
+        )
         reader = try ArchiveReader(bundleURL: bundleURL)
     }
 

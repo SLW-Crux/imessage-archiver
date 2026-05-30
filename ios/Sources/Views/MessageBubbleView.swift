@@ -11,7 +11,7 @@ struct MessageBubbleView: View {
     @State private var attachments: [Attachment] = []
 
     var body: some View {
-        VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 2) {
+        VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 4) {
             if showSender && !message.isFromMe {
                 Text(message.displaySender)
                     .font(.caption)
@@ -19,19 +19,36 @@ struct MessageBubbleView: View {
                     .padding(.horizontal, 4)
             }
 
-            HStack {
-                if message.isFromMe { Spacer(minLength: 60) }
+            // Attachments + bubble + reactions stack as siblings inside one
+            // hugging column so each piece can size itself. Spacers cap the
+            // column width to roughly (container − bubbleMaxWidthInset).
+            HStack(spacing: 0) {
+                if message.isFromMe {
+                    Spacer(minLength: Spacing.bubbleMaxWidthInset)
+                }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    bubbleContent
+                VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 4) {
+                    // Attachments render OUTSIDE the bubble background — a
+                    // bubble behind a photo is a third-party tell. Bubble
+                    // colour applies only to the text view below.
+                    if !attachments.isEmpty {
+                        AttachmentGridView(
+                            attachments: attachments,
+                            cache: cache,
+                            tarReader: tarReader
+                        )
+                    }
+
+                    textBubble
+
                     if !message.reactions.isEmpty {
                         ReactionsView(reactions: message.reactions)
                     }
                 }
-                .background(bubbleColor)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
-                if !message.isFromMe { Spacer(minLength: 60) }
+                if !message.isFromMe {
+                    Spacer(minLength: Spacing.bubbleMaxWidthInset)
+                }
             }
 
             if showTimestamp {
@@ -55,44 +72,43 @@ struct MessageBubbleView: View {
         .accessibilityLabel(accessibilityText)
     }
 
+    /// The text bubble, sized to its content. Emits nothing for a
+    /// photo-only message — the @ViewBuilder closure produces an empty
+    /// view when no branch matches, so an attachment-only message
+    /// doesn't get a stray empty bubble.
     @ViewBuilder
-    private var bubbleContent: some View {
+    private var textBubble: some View {
         if message.isRetracted {
             Text("Message unsent")
                 .italic()
                 .foregroundStyle(message.isFromMe ? .white.opacity(0.8) : .secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-        } else {
-            VStack(alignment: .leading, spacing: 4) {
-                if let text = message.text, !text.isEmpty {
-                    Text(text)
-                        .foregroundStyle(message.isFromMe ? .white : .primary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .textSelection(.enabled)
-                }
+                .padding(.horizontal, Spacing.bubblePaddingHorizontal)
+                .padding(.vertical, Spacing.bubblePaddingVertical)
+                .background(bubbleBackground, in: RoundedRectangle.bubble)
+                .tint(message.isFromMe ? .white : .accentColor)
+        } else if let text = message.text, !text.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(text)
+                    .foregroundStyle(message.isFromMe ? .white : .primary)
+                    .textSelection(.enabled)
                 if message.isEdited {
                     Text("Edited")
                         .font(.caption2)
                         .foregroundStyle(message.isFromMe ? .white.opacity(0.7) : .secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 4)
-                }
-                if !attachments.isEmpty {
-                    AttachmentGridView(
-                        attachments: attachments,
-                        cache: cache,
-                        tarReader: tarReader
-                    )
-                    .padding(.bottom, 4)
                 }
             }
+            .padding(.horizontal, Spacing.bubblePaddingHorizontal)
+            .padding(.vertical, Spacing.bubblePaddingVertical)
+            .background(bubbleBackground, in: RoundedRectangle.bubble)
+            // .tint propagates to any auto-detected link styling inside Text,
+            // so a URL inside a sent (accent-coloured) bubble doesn't render
+            // as accent-on-accent and disappear.
+            .tint(message.isFromMe ? .white : .accentColor)
         }
     }
 
-    private var bubbleColor: Color {
-        message.isFromMe ? .blue : Color.platformSecondaryBackground
+    private var bubbleBackground: Color {
+        message.isFromMe ? .bubbleSent : .bubbleReceived
     }
 
     private var accessibilityText: String {

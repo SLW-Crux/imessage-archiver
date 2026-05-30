@@ -83,7 +83,18 @@ struct AttachmentThumbnailView: View {
         .task(id: attachment.attachmentGuid) {
             await loadThumbnail()
         }
-        .accessibilityLabel(attachment.filename ?? "Attachment")
+        .accessibilityLabel(displayFilename ?? "Attachment")
+    }
+
+    /// The `filename` column in archive.sqlite is the full source path on
+    /// the Mac that produced the archive (e.g.
+    /// `~/Library/Messages/Attachments/de/14/.../IMG_0001.HEIC`). Showing
+    /// it raw leaks user filesystem layout and truncates uselessly. Use
+    /// the basename for display + accessibility.
+    private var displayFilename: String? {
+        guard let name = attachment.filename, !name.isEmpty else { return nil }
+        let base = (name as NSString).lastPathComponent
+        return base.isEmpty ? nil : base
     }
 
     @ViewBuilder
@@ -93,10 +104,11 @@ struct AttachmentThumbnailView: View {
             Image(systemName: mimeIcon(mime))
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            if let name = attachment.filename {
+            if let name = displayFilename {
                 Text(name)
                     .font(.system(size: 9))
                     .lineLimit(2)
+                    .truncationMode(.middle)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }

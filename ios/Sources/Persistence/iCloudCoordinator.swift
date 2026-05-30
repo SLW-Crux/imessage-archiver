@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 private let kContainerID = "iCloud.com.slw.imessage-archiver"
 private let kBundleName  = "archive.imarchive"
@@ -40,25 +41,22 @@ final class iCloudCoordinator {
     // The MainActor handler discards anything older than the highest
     // already-processed token so out-of-order @MainActor Task hops can't
     // overwrite a fresh `.ready` with a stale `.downloading` (H-14).
-    // `nextEventToken` is only mutated under `tokenLock` (see mintEventToken).
-    // `nonisolated(unsafe)` was overkill: it's never accessed outside the lock.
-    private nonisolated let tokenLock = NSLock()
-    // `nonisolated(unsafe)` is required for mutable storage accessed from
-    // `mintEventToken` (which runs on a non-MainActor dispatch queue).
-    // Swift's "consider using 'nonisolated'" warning suggestion is wrong
-    // here — plain `nonisolated` only applies to `let`. The mutation is
-    // safe because every read/write of `nextEventToken` is gated by
-    // `tokenLock.lock()` inside `mintEventToken`.
-    private nonisolated(unsafe) var nextEventToken: UInt64 = 0
+    //
+    // OSAllocatedUnfairLock<UInt64> is Sendable-protected storage: the
+    // `let` lets us hold it inside a @MainActor class without any
+    // nonisolated(unsafe) annotation, and `withLock` gives us atomic
+    // mutation across whatever thread NSMetadataQuery calls the
+    // notification handler on.
+    private let nextEventToken = OSAllocatedUnfairLock<UInt64>(initialState: 0)
     private var lastProcessedToken: UInt64 = 0
 
     // nonisolated because queryDidUpdate (the only caller) runs on whatever
     // dispatch queue NSMetadataQuery uses, not on the MainActor.
     private nonisolated func mintEventToken() -> UInt64 {
-        tokenLock.lock()
-        defer { tokenLock.unlock() }
-        nextEventToken &+= 1
-        return nextEventToken
+        nextEventToken.withLock { token in
+            token &+= 1
+            return token
+        }
     }
 
     func start() {

@@ -1,0 +1,26 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="bgD2" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#0A84FF"/>
+<stop offset="1" stop-color="#5856D6"/>
+</linearGradient>
+<linearGradient id="topHighlightD2" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+<stop offset="0.35" stop-color="#ffffff" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="bottomShadeD2" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+<stop offset="0.62" stop-color="#000000" stop-opacity="0"/>
+<stop offset="1" stop-color="#000000" stop-opacity="0.16"/>
+</linearGradient>
+</defs>
+<rect x="0" y="0" width="1024" height="1024" fill="url(#bgD2)"/>
+<rect x="0" y="0" width="1024" height="1024" fill="url(#topHighlightD2)"/>
+<g transform="translate(512 560)">
+<g opacity="0.10" transform="translate(0 -322) scale(0.74)"><path d="M-300 -168 H300 a46 46 0 0 1 46 46 V168 a46 46 0 0 1 -46 46 H-104 l-80 76 v-76 H-300 a46 46 0 0 1 -46 -46 V-122 a46 46 0 0 1 46 -46 Z" fill="#ffffff"/></g>
+<g opacity="0.18" transform="translate(0 -246) scale(0.83)"><path d="M-300 -168 H300 a46 46 0 0 1 46 46 V168 a46 46 0 0 1 -46 46 H-104 l-80 76 v-76 H-300 a46 46 0 0 1 -46 -46 V-122 a46 46 0 0 1 46 -46 Z" fill="#ffffff"/></g>
+<g opacity="0.30" transform="translate(0 -162) scale(0.90)"><path d="M-300 -168 H300 a46 46 0 0 1 46 46 V168 a46 46 0 0 1 -46 46 H-104 l-80 76 v-76 H-300 a46 46 0 0 1 -46 -46 V-122 a46 46 0 0 1 46 -46 Z" fill="#ffffff"/></g>
+<g opacity="0.52" transform="translate(0 -72) scale(0.955)"><path d="M-300 -168 H300 a46 46 0 0 1 46 46 V168 a46 46 0 0 1 -46 46 H-104 l-80 76 v-76 H-300 a46 46 0 0 1 -46 -46 V-122 a46 46 0 0 1 46 -46 Z" fill="#ffffff"/></g>
+<g opacity="1" transform="translate(0 30) scale(1)"><path d="M-300 -168 H300 a46 46 0 0 1 46 46 V168 a46 46 0 0 1 -46 46 H-104 l-80 76 v-76 H-300 a46 46 0 0 1 -46 -46 V-122 a46 46 0 0 1 46 -46 Z" fill="#ffffff"/></g>
+</g>
+<rect x="0" y="0" width="1024" height="1024" fill="url(#bottomShadeD2)"/>
+</svg>

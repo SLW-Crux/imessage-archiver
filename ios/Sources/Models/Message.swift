@@ -53,11 +53,14 @@ struct Reaction: Hashable, Sendable, Codable {
         // earlier sketches considered ISO strings. Accept either, so
         // reactions survive a format drift instead of silently dropping
         // every message's reactions (H-8 from review).
-        if let ts = try? c.decodeIfPresent(Double.self, forKey: .timestamp) {
-            timestamp = ts.map { Date(timeIntervalSince1970: $0) }
-        } else if let str = try? c.decodeIfPresent(String.self, forKey: .timestamp), let str {
-            let iso = ISO8601DateFormatter()
-            timestamp = iso.date(from: str)
+        //
+        // Use `decode` (not `decodeIfPresent`) with `try?` so the result
+        // is a clean `T?` rather than Swift's Optional-flattening of
+        // `T??`, which would make the `if let` bind a non-optional T.
+        if let tsDouble = try? c.decode(Double.self, forKey: .timestamp) {
+            timestamp = Date(timeIntervalSince1970: tsDouble)
+        } else if let tsString = try? c.decode(String.self, forKey: .timestamp) {
+            timestamp = ISO8601DateFormatter().date(from: tsString)
         } else {
             timestamp = nil
         }

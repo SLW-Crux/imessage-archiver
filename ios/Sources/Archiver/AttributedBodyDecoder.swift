@@ -7,19 +7,26 @@ import UIKit
 
 /// Extracts the plain-text string from a `chat.db` `attributedBody` BLOB.
 ///
-/// On macOS 10.13+, many messages store their text in the
-/// `attributedBody` column as a typedstream- or `NSKeyedArchiver`-
-/// wrapped `NSAttributedString` rather than the plain `text` column.
-/// Pure-Python decoders for typedstream miss ~75% of messages (the
-/// project hit this in PR #31 and switched to PyObjC's `NSUnarchiver`,
-/// which decodes both formats exactly the way Messages.app does).
+/// chat.db stores message text in one of TWO encodings:
 ///
-/// Native Swift gets the same authoritative path for free: Foundation's
-/// `NSUnarchiver` handles both legacy typedstream and modern keyed-
-/// archive formats. No Python bridge needed.
+/// 1. **`NSKeyedArchiver` bplist** — modern format (macOS 10.13+). Decodable
+///    with `NSKeyedUnarchiver` which is the modern non-deprecated API.
 ///
-/// Use `AttributedBodyDecoder.extractText(from: blob)` from the archiver
-/// when the `text` column is NULL but `attributedBody` is non-empty.
+/// 2. **Legacy `typedstream`** — older messages, still present in chat.db
+///    on every Mac (Messages.app never re-encoded existing rows). The
+///    ONLY Foundation API that decodes typedstream is `NSUnarchiver`,
+///    which has been deprecated in favour of NSKeyedUnarchiver — but
+///    NSKeyedUnarchiver does not understand typedstream and returns
+///    nil. The Python port discovered this in PR #31; reading legacy
+///    rows with NSKeyedUnarchiver-only would silently drop ~75% of
+///    message text on older accounts.
+///
+/// Order: try NSKeyedUnarchiver first (covers modern messages without
+/// touching deprecated API); fall back to NSUnarchiver for typedstream.
+/// The deprecation warning on the legacy path is suppressed at its
+/// single call site with `@available(*, deprecated)` on the wrapper —
+/// chat.db backward-compatibility makes the usage intentional and
+/// non-removable.
 enum AttributedBodyDecoder {
 
     /// Hard cap on the attributedBody size we attempt to decode. A
@@ -36,36 +43,74 @@ enum AttributedBodyDecoder {
             return nil
         }
 
-        // Foundation's NSUnarchiver decodes both legacy typedstream and
-        // modern NSKeyedArchiver bplists. The objects it produces are
-        // either NSAttributedString (which has a .string accessor) or
-        // raw NSString.
-        //
-        // Wrap with try? so any decode failure (corrupt blob, unknown
-        // class) returns nil rather than throwing.
-        let nsData = data as NSData
-
-        let decoded: Any?
-        if let unarchiver = NSUnarchiver(forReadingWith: nsData as Data) {
-            decoded = unarchiver.decodeObject()
-        } else {
-            decoded = nil
+        if let modern = decodeWithKeyedUnarchiver(data) {
+            return modern
         }
+        return decodeLegacyTypedstream(data)
+    }
 
-        if let attributed = decoded as? NSAttributedString {
-            let s = attributed.string
+    // MARK: - Modern bplist NSKeyedArchiver path
+
+    private static func decodeWithKeyedUnarchiver(_ data: Data) -> String? {
+        // Try the modern NSAttributedString-shaped decode. Secure
+        // coding is enabled by default on the static helpers;
+        // attributedBody blobs are produced by NSKeyedArchiver inside
+        // Messages.app, so NSSecureCoding compliance holds.
+        if let attr = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClass: NSAttributedString.self,
+            from: data
+        ) {
+            let s = attr.string
             return s.isEmpty ? nil : s
         }
-
-        if let s = decoded as? String, !s.isEmpty {
-            return s
+        // Some bplist blobs have a different top-level class (NSString,
+        // NSMutableString). Try the unsafe-but-broader fallback.
+        if let any = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) {
+            if let attr = any as? NSAttributedString {
+                let s = attr.string
+                return s.isEmpty ? nil : s
+            }
+            if let ns = any as? NSString {
+                let s = ns as String
+                return s.isEmpty ? nil : s
+            }
+            if let s = any as? String {
+                return s.isEmpty ? nil : s
+            }
         }
+        return nil
+    }
 
+    // MARK: - Legacy typedstream NSUnarchiver path
+
+    /// Legacy typedstream decode. `NSUnarchiver` is the only Foundation
+    /// API that understands typedstream; it's deprecated in favour of
+    /// `NSKeyedUnarchiver`, which CANNOT decode this format. Keep the
+    /// fallback explicit + wrapped in a deprecated function so the
+    /// suppression is documented in one place.
+    ///
+    /// `NSUnarchiver(forReadingWith:)` returns `nil` when the bytes
+    /// don't look like a typedstream archive (e.g. when we hand it a
+    /// bplist) — that's our cheap input-validation gate. Once the
+    /// initializer succeeds, `decodeObject()` is safe for the
+    /// well-formed typedstream blobs that chat.db produces.
+    @available(*, deprecated, message: "Intentional — required to decode legacy chat.db typedstream blobs that NSKeyedUnarchiver cannot handle.")
+    private static func decodeLegacyTypedstream(_ data: Data) -> String? {
+        guard let unarchiver = NSUnarchiver(forReadingWith: data) else {
+            return nil
+        }
+        let decoded = unarchiver.decodeObject()
+        if let attr = decoded as? NSAttributedString {
+            let s = attr.string
+            return s.isEmpty ? nil : s
+        }
         if let ns = decoded as? NSString {
             let s = ns as String
             return s.isEmpty ? nil : s
         }
-
+        if let s = decoded as? String {
+            return s.isEmpty ? nil : s
+        }
         return nil
     }
 }

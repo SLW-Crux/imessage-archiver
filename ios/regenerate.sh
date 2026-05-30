@@ -47,10 +47,7 @@ cat > iMessageArchiverMac.entitlements <<'EOF'
     <array>
         <string>iCloud.com.slw.imessage-archiver</string>
     </array>
-    <key>com.apple.security.app-sandbox</key>
-    <true/>
-    <key>com.apple.security.files.user-selected.read-only</key>
-    <true/>
+    <!-- App Sandbox intentionally disabled — see entitlements file for rationale. -->
 </dict>
 </plist>
 EOF

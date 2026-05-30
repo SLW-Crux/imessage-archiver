@@ -14,9 +14,22 @@
     <array>
         <string>iCloud.com.slw.imessage-archiver</string>
     </array>
-    <key>com.apple.security.app-sandbox</key>
-    <true/>
-    <key>com.apple.security.files.user-selected.read-only</key>
-    <true/>
+    <!--
+        App Sandbox is intentionally DISABLED for the Mac target.
+
+        Reason: a sandboxed Mac app cannot use raw POSIX open() on files
+        inside the iCloud-managed Mobile Documents/ tree, even with the
+        ubiquity-container entitlement. SQLite (via GRDB) does raw open
+        and fails with SQLITE_CANTOPEN. The proper fix would be to wrap
+        all DB access in NSFileCoordinator; until that lands, the Mac
+        app runs un-sandboxed.
+
+        Trade-offs:
+        - No Mac App Store distribution (sandbox is mandatory there).
+        - Still signed by the user's Apple Developer Team ID. Notarisation
+          is still possible.
+        - The app is read-only against the bundle; no security regression
+          beyond losing sandbox-induced isolation.
+    -->
 </dict>
 </plist>

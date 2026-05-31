@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 
 /// Single-writer lock for an archive bundle.
@@ -81,3 +82,5 @@ public final class ArchiveLock {
         return errno != ESRCH
     }
 }
+
+#endif

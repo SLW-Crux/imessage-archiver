@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import GRDB
 import CryptoKit
@@ -103,3 +104,5 @@ public enum ArchiveVerifier {
         return result
     }
 }
+
+#endif

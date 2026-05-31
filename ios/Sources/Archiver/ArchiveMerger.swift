@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import GRDB
 
@@ -101,3 +102,5 @@ public enum ArchiveMerger {
         )
     }
 }
+
+#endif

@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import GRDB
 
@@ -13,8 +14,13 @@ import GRDB
 /// - `manifest.json` is written atomically (`.tmp` → rename) on every
 ///   run.
 ///
+/// `@unchecked Sendable` because the class is single-owner per run
+/// (CreateArchiveCoordinator's Task), the only state captured into
+/// @Sendable closures (archiverVersion lookup) is immutable, and
+/// GRDB's DatabaseQueue is itself Sendable.
+///
 /// Port of `src/imessage_archiver/core/archive.py`.
-public final class ArchiveWriter {
+public final class ArchiveWriter: @unchecked Sendable {
 
     /// Frozen-contract schema version. Both Mac archiver and iOS reader
     /// refuse to open bundles whose schema version exceeds the value
@@ -286,14 +292,20 @@ public final class ArchiveWriter {
         sourceDBPath: String,
         dbQueue: DatabaseQueue
     ) async throws -> Int64 {
-        try await dbQueue.write { db in
+        // Read the version OUTSIDE the @Sendable closure so we don't
+        // need to capture `self`. The closure is Sendable; ArchiveWriter
+        // is @unchecked Sendable but referencing methods on it from the
+        // closure still trips the compiler's `self` warning unless we
+        // copy the value first.
+        let version = archiverVersion()
+        return try await dbQueue.write { db in
             try db.execute(sql: """
                 INSERT INTO archive_runs(
                     run_id, started_at, source_db_sha256, source_db_path,
                     archiver_version
                 ) VALUES (?, ?, ?, ?, ?)
                 """, arguments: [
-                    runID, startedAt, sourceSHA, sourceDBPath, archiverVersion()
+                    runID, startedAt, sourceSHA, sourceDBPath, version
                 ])
             return db.lastInsertedRowID
         }
@@ -646,3 +658,5 @@ extension SourceDBReader.MessageRow {
         )
     }
 }
+
+#endif

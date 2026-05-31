@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Developer ID distribution — for notarized DMG / direct
+         download. NOT for App Store / TestFlight (use app-store
+         instead for those). -->
+    <key>method</key>
+    <string>developer-id</string>
+
+    <!-- Stephen Williams team ID. Must match the team that owns the
+         Developer ID Application certificate in the keychain. -->
+    <key>teamID</key>
+    <string>7V698GFQCM</string>
+
+    <!-- Automatic signing lets Xcode pick the right Developer ID
+         Application cert without us hard-coding a SHA fingerprint
+         that would break if the cert is rotated. -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <!-- Strip Swift symbols from the bundled binaries — smaller DMG,
+         no debugging-symbol leakage to end users. -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <!-- destination = export writes the .app to a local directory we
+         then notarize ourselves. (Alternative is 'upload', which
+         submits straight to App Store Connect — wrong path for
+         direct-download distribution.) -->
+    <key>destination</key>
+    <string>export</string>
+</dict>
+</plist>

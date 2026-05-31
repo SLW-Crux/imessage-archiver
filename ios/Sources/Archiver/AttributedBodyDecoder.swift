@@ -1,9 +1,6 @@
-import Foundation
 #if os(macOS)
+import Foundation
 import AppKit
-#else
-import UIKit
-#endif
 
 /// Extracts the plain-text string from a `chat.db` `attributedBody` BLOB.
 ///
@@ -114,3 +111,5 @@ enum AttributedBodyDecoder {
         return nil
     }
 }
+
+#endif

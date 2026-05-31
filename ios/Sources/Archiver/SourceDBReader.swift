@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import GRDB
 
@@ -317,3 +318,5 @@ public struct SourceDBReader {
         return nil
     }
 }
+
+#endif

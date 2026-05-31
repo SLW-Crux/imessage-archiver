@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 
 /// Append-mode POSIX ustar tar writer for `attachments.tar`.
@@ -71,9 +72,13 @@ public final class TarWriter {
         try padToBlockBoundary()
         try handle.synchronize()
 
-        let endOffset = try handle.offset()
+        let endOffset = try handle.offset()  // UInt64 from FileHandle
         let padded = ((fileSize + Int64(Self.blockSize - 1)) / Int64(Self.blockSize)) * Int64(Self.blockSize)
-        let tarOffset = endOffset - padded
+        // FileHandle returns UInt64 offsets; the tar protocol values
+        // we expose are Int64 (matches archive.sqlite schema). Convert
+        // explicitly — offsets can't exceed Int64.max on any realistic
+        // tar (>9 EiB).
+        let tarOffset = Int64(endOffset) - padded
         _ = headerStart  // diagnostic-only; PAX path makes header_start + 512 wrong
         return (tarOffset, fileSize)
     }
@@ -216,8 +221,8 @@ public final class TarWriter {
     }
 
     private func padToBlockBoundary() throws {
-        let pos = try handle.offset()
-        let pad = Int(pos % Int64(Self.blockSize))
+        let pos = try handle.offset()  // UInt64
+        let pad = Int(pos % UInt64(Self.blockSize))
         if pad > 0 {
             let bytes = Self.blockSize - pad
             try handle.write(contentsOf: Data(repeating: 0, count: bytes))
@@ -295,3 +300,5 @@ public enum TarWriteError: Error, LocalizedError {
         }
     }
 }
+
+#endif

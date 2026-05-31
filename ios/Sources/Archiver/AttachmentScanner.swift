@@ -1,16 +1,12 @@
+#if os(macOS)
 import Foundation
 import CryptoKit
 
-/// State an attachment can be in at archive time. Mirrors the iOS
-/// reader's `AttachmentState` enum so the bundle schema is stable.
-public enum AttachmentState: String, Sendable {
-    case localPresent = "LOCAL_PRESENT"
-    case missing      = "MISSING"
-    case zeroByte     = "ZERO_BYTE"
-    case unreadable   = "UNREADABLE"
-}
-
 /// Classify and hash attachments referenced by chat.db.
+///
+/// Uses the project-wide `AttachmentState` enum from
+/// `Models/Attachment.swift` so the same case values flow through
+/// reader + writer + archive schema without duplication.
 ///
 /// Port of `src/imessage_archiver/core/attachments.py`.
 public enum AttachmentScanner {
@@ -75,3 +71,5 @@ public enum AttachmentScanner {
         case hashFailed
     }
 }
+
+#endif

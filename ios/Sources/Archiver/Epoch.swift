@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 
 /// Apple-epoch ↔ Unix-epoch conversion for `chat.db` date columns.
@@ -43,3 +44,5 @@ enum AppleEpoch {
         Int64(date.timeIntervalSince1970)
     }
 }
+
+#endif

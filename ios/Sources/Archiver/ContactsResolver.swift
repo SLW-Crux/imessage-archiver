@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import Contacts
 
@@ -24,12 +25,18 @@ public actor ContactsResolver {
     private var cache: [String: String] = [:]
     private let cacheCapacity = 2048
 
-    private static let keysToFetch: [CNKeyDescriptor] = [
-        CNContactGivenNameKey as CNKeyDescriptor,
-        CNContactFamilyNameKey as CNKeyDescriptor,
-        CNContactPhoneNumbersKey as CNKeyDescriptor,
-        CNContactEmailAddressesKey as CNKeyDescriptor,
-    ]
+    // Computed (not stored static) because [CNKeyDescriptor] isn't
+    // Sendable; a static let would fire a Swift 6 concurrency-safety
+    // warning. The cost of recomputing is trivial — four bridged-string
+    // casts.
+    private static var keysToFetch: [CNKeyDescriptor] {
+        [
+            CNContactGivenNameKey as CNKeyDescriptor,
+            CNContactFamilyNameKey as CNKeyDescriptor,
+            CNContactPhoneNumbersKey as CNKeyDescriptor,
+            CNContactEmailAddressesKey as CNKeyDescriptor,
+        ]
+    }
 
     public init() {
         self.store = CNContactStore()
@@ -119,3 +126,5 @@ public actor ContactsResolver {
         return composed.isEmpty ? handle : composed
     }
 }
+
+#endif

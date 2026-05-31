@@ -1,3 +1,4 @@
+#if os(macOS)
 import Foundation
 import GRDB
 import CryptoKit
@@ -151,3 +152,5 @@ struct SourceDBSnapshotter {
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 }
+
+#endif

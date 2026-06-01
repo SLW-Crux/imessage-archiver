@@ -43,7 +43,7 @@ final class CreateArchiveCoordinator {
     private var task: Task<Void, Never>?
 
     init(
-        destinationBundleURL: URL? = Self.defaultDestination(),
+        destinationBundleURL: URL? = CreateArchiveCoordinator.defaultDestination(),
         chatDBURL: URL = SourceDBSnapshotter.defaultSourceURL
     ) {
         self.destinationBundleURL = destinationBundleURL

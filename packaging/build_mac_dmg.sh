@@ -42,6 +42,11 @@ PROJECT="$REPO_ROOT/ios/iMessageArchiver.xcodeproj"
 EXPORT_OPTIONS="$REPO_ROOT/packaging/ExportOptions-DeveloperID.plist"
 NOTARY_PROFILE="${NOTARY_PROFILE:-honk-notary}"
 
+# Name of the Developer ID Distribution provisioning profile created at
+# developer.apple.com. Override via env if you used a different name:
+#   DEVID_PROFILE_NAME="My Profile" ./packaging/build_mac_dmg.sh
+DEVID_PROFILE_NAME="${DEVID_PROFILE_NAME:-Honk Mac Developer ID}"
+
 # Read MARKETING_VERSION out of project.yml so the DMG filename
 # matches the in-app version.
 VERSION=$(awk -F': *' '/^ *MARKETING_VERSION/ {gsub(/"/,"",$2); print $2; exit}' \
@@ -107,13 +112,29 @@ if [ -z "$DEVID_TEAM" ]; then
 fi
 echo "    Using Developer ID team: $DEVID_TEAM"
 
-# Manual signing with the Developer ID Application cert directly.
-# Automatic signing would try to fetch a "Mac App Development"
-# provisioning profile for the bundle ID, which (a) isn't needed for
-# Developer ID distribution, and (b) wouldn't exist anyway since this
-# app isn't registered at developer.apple.com for development. Manual
-# + the explicit cert + an empty PROVISIONING_PROFILE_SPECIFIER tells
-# xcodebuild to sign with just the cert.
+# Confirm the Developer ID Distribution provisioning profile is
+# installed. Mac apps with iCloud capability require a profile even
+# under Manual / Developer ID signing — the profile is what
+# authorizes the iCloud entitlement at runtime.
+if ! find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "*.provisionprofile" -exec sh -c '
+    security cms -D -i "$1" 2>/dev/null | /usr/bin/grep -q "<string>'"$DEVID_PROFILE_NAME"'</string>"
+' _ {} \; -print 2>/dev/null | grep -q .; then
+    red "Developer ID provisioning profile '$DEVID_PROFILE_NAME' not installed."
+    echo "       Create it at developer.apple.com:"
+    echo "         Profiles → + → Distribution → Developer ID"
+    echo "         App ID: com.honk.imsgarchiver-mac"
+    echo "         Cert:   Developer ID Application: Stephen Williams ($DEVID_TEAM)"
+    echo "         Name:   $DEVID_PROFILE_NAME"
+    echo "       Download, double-click to install, then re-run."
+    exit 1
+fi
+green "Developer ID profile '$DEVID_PROFILE_NAME' present"
+
+# Manual signing with the Developer ID Application cert + the
+# Developer ID Distribution provisioning profile. Without the profile
+# specifier, xcodebuild errors that "iMessageArchiverMac requires a
+# provisioning profile with the iCloud feature" because the iCloud
+# entitlement must be backed by a profile.
 xcodebuild archive \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
@@ -123,7 +144,7 @@ xcodebuild archive \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Developer ID Application" \
     DEVELOPMENT_TEAM="$DEVID_TEAM" \
-    PROVISIONING_PROFILE_SPECIFIER="" \
+    PROVISIONING_PROFILE_SPECIFIER="$DEVID_PROFILE_NAME" \
     > "$BUILD_DIR/archive.log" 2>&1 \
     || { red "xcodebuild archive failed — see $BUILD_DIR/archive.log"; tail -30 "$BUILD_DIR/archive.log"; exit 1; }
 green "Archive: $ARCHIVE_PATH"

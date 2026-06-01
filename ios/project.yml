@@ -49,6 +49,13 @@ targets:
         excludes:
           # Excludes the Mac-specific @main entry from the iOS app target.
           - "App/iMessageArchiverMacApp.swift"
+          # ObjC shim is Mac-only — wraps NSUnarchiver in @try/@catch
+          # so a malformed legacy typedstream blob can't kill the
+          # archive run (review finding MH1). Header is harmless on
+          # iOS; the .m file would need a bridging header the iOS
+          # target doesn't have. Exclude both.
+          - "Archiver/AttributedBodyDecoderShim.h"
+          - "Archiver/AttributedBodyDecoderShim.m"
       # xcodegen 2.45.4 silently drops top-level `resources:` blocks on
       # this project — no PBXResourcesBuildPhase gets emitted, so the
       # asset catalog never lands in the .app bundle. Declaring the
@@ -142,6 +149,11 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Hardened Runtime is required for macOS apps that use iCloud.
         ENABLE_HARDENED_RUNTIME: YES
+        # ObjC bridging header exposes the AttributedBodyDecoderShim
+        # @try/@catch wrapper for NSUnarchiver to Swift. Without this,
+        # a malformed legacy typedstream blob raises an NSException
+        # that Swift can't catch and the archive run aborts (MH1).
+        SWIFT_OBJC_BRIDGING_HEADER: iMessageArchiverMac-BridgingHeader.h
     dependencies:
       - package: GRDB
     capabilities:

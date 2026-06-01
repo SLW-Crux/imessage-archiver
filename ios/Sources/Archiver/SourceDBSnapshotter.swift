@@ -134,6 +134,34 @@ struct SourceDBSnapshotter {
         return Snapshot(url: snapURL, sha256: sha)
     }
 
+    /// Delete a previously-created snapshot's directory. Idempotent.
+    /// Call this from the coordinator's success / failure / cancel
+    /// paths so the multi-GB snapshot doesn't accumulate (review
+    /// finding MC3).
+    static func cleanup(_ snapshot: Snapshot) {
+        try? FileManager.default.removeItem(
+            at: snapshot.url.deletingLastPathComponent()
+        )
+    }
+
+    /// Sweep any leftover snapshot-* directories under `workRoot`.
+    /// Called at archive startup so a previously-crashed run's leak
+    /// gets reclaimed even if the coordinator never had a chance to
+    /// run its defer. Safe to call concurrently because each entry
+    /// has a UUID-named directory; we never touch the run we're
+    /// about to create (it hasn't been created yet).
+    static func sweepLeftovers(workRoot: URL = defaultWorkRoot) {
+        let fm = FileManager.default
+        guard let entries = try? fm.contentsOfDirectory(
+            at: workRoot,
+            includingPropertiesForKeys: nil
+        ) else { return }
+        for url in entries
+        where url.lastPathComponent.hasPrefix("snapshot-") {
+            try? fm.removeItem(at: url)
+        }
+    }
+
     /// Stream-hash a file in 1 MB chunks. Suitable for multi-GB chat.db.
     static func sha256(of url: URL) throws -> String {
         guard let handle = try? FileHandle(forReadingFrom: url) else {

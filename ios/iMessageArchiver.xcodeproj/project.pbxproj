@@ -80,6 +80,7 @@
 		CB8D54E35335BD94E163BBA7 /* ArchiveMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA4671470A6564DEFCEDC477 /* ArchiveMerger.swift */; };
 		CBE6910047BDFEC1E77C45B7 /* NoArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F092DBBC94A4D46895F3BEFB /* NoArchiveView.swift */; };
 		CD52DEBFA6615E79E436FF21 /* ArchiveMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA4671470A6564DEFCEDC477 /* ArchiveMerger.swift */; };
+		D029473D461EC4D8A752D297 /* AttributedBodyDecoderShim.m in Sources */ = {isa = PBXBuildFile; fileRef = 06168CFC9EEB43A0FAC63858 /* AttributedBodyDecoderShim.m */; };
 		D44634E991BA7CA64F7389CD /* ArchiveReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */; };
 		D4C41BE680BB17DC9F0892B3 /* ArchiveError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCB24E02F5F74457705FB27 /* ArchiveError.swift */; };
 		D90279873059321314FE7B80 /* CreateArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9C78B4B32DB1472C4C6D689 /* CreateArchiveView.swift */; };
@@ -115,6 +116,7 @@
 
 /* Begin PBXFileReference section */
 		05A93A74873F3C91904DA4C3 /* ArchiveWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveWriter.swift; sourceTree = "<group>"; };
+		06168CFC9EEB43A0FAC63858 /* AttributedBodyDecoderShim.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AttributedBodyDecoderShim.m; sourceTree = "<group>"; };
 		0CCB24E02F5F74457705FB27 /* ArchiveError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveError.swift; sourceTree = "<group>"; };
 		126B174C6BBC77EABB3C9C5B /* ThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadView.swift; sourceTree = "<group>"; };
 		2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudCoordinator.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 		937207C2E2989D23D73E448A /* Tokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokens.swift; sourceTree = "<group>"; };
 		9509D46A3AAD2D95E947E757 /* iMessageArchiverMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iMessageArchiverMacApp.swift; sourceTree = "<group>"; };
 		A67D98C9EBDB22C1D578A26E /* iMessageArchiverTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = iMessageArchiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA8E762DD1B3C078E72E196A /* AttributedBodyDecoderShim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AttributedBodyDecoderShim.h; sourceTree = "<group>"; };
 		AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentCache.swift; sourceTree = "<group>"; };
 		B638E467B388F7D6EDD8E3A5 /* ContactsResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsResolver.swift; sourceTree = "<group>"; };
 		B6CCC8E8F50C965564FB672C /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -300,6 +303,8 @@
 				05A93A74873F3C91904DA4C3 /* ArchiveWriter.swift */,
 				E6063CEC7335C6DD32D0EE5E /* AttachmentScanner.swift */,
 				B977BD23A26E0B7E3BAD164B /* AttributedBodyDecoder.swift */,
+				AA8E762DD1B3C078E72E196A /* AttributedBodyDecoderShim.h */,
+				06168CFC9EEB43A0FAC63858 /* AttributedBodyDecoderShim.m */,
 				B638E467B388F7D6EDD8E3A5 /* ContactsResolver.swift */,
 				D148226BF17196C2D46C01F5 /* CreateArchiveCoordinator.swift */,
 				7BCF67628480AD5A509B2FBC /* Epoch.swift */,
@@ -526,6 +531,7 @@
 				4D905EDC5694017C449C94C9 /* AttachmentGridView.swift in Sources */,
 				0F0BB23287513267070935D0 /* AttachmentScanner.swift in Sources */,
 				3778D0B8D3FC135D4157ED73 /* AttributedBodyDecoder.swift in Sources */,
+				D029473D461EC4D8A752D297 /* AttributedBodyDecoderShim.m in Sources */,
 				18B826F3B45ECCC7E3E02D1C /* Chat.swift in Sources */,
 				DFFD013786D3F7D8C40C33C4 /* ChatListView.swift in Sources */,
 				6CD6544C9E3E7492A21AE4BA /* ChatRowView.swift in Sources */,
@@ -737,6 +743,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.honk.imsgarchiver-mac";
 				PRODUCT_NAME = iMessageArchiverMac;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "iMessageArchiverMac-BridgingHeader.h";
 			};
 			name = Release;
 		};
@@ -793,6 +800,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.honk.imsgarchiver-mac";
 				PRODUCT_NAME = iMessageArchiverMac;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "iMessageArchiverMac-BridgingHeader.h";
 			};
 			name = Debug;
 		};

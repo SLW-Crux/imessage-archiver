@@ -64,13 +64,29 @@ final class CreateArchiveCoordinator {
 
     func cancel() {
         task?.cancel()
-        task = nil
-        phase = .idle
+        // Don't nil `task` or reset `phase` here — the task body itself
+        // catches `CancellationError`, transitions phase to .idle, and
+        // sets `self.task = nil` after `runArchive` returns. Nilling
+        // synchronously here lets `start()` race a second run while
+        // the first is still draining (review finding MH2).
     }
 
     // MARK: - Run
 
     private func runArchive(bundleURL: URL, chatDB: URL) async {
+        // Sweep any snapshots left behind by a previously-crashed run
+        // before creating our own. Per-run cleanup (defer below) covers
+        // the success / failure / cancel exits of THIS run; the sweep
+        // covers prior crashes that never ran defer (MC3).
+        SourceDBSnapshotter.sweepLeftovers()
+
+        var snapshotForCleanup: SourceDBSnapshotter.Snapshot?
+        defer {
+            if let s = snapshotForCleanup {
+                SourceDBSnapshotter.cleanup(s)
+            }
+        }
+
         do {
             phase = .snapshotting
             // 1. VACUUM INTO snapshot of chat.db. Heavy I/O; run on a
@@ -78,6 +94,7 @@ final class CreateArchiveCoordinator {
             let snapshot = try await Task.detached(priority: .userInitiated) {
                 try SourceDBSnapshotter.snapshot(source: chatDB)
             }.value
+            snapshotForCleanup = snapshot
 
             // 2. Open the snapshot for reading.
             let reader = try SourceDBReader(snapshotURL: snapshot.url)

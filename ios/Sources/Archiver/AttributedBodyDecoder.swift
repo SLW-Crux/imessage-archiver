@@ -94,21 +94,19 @@ enum AttributedBodyDecoder {
 
     /// Legacy typedstream decode. `NSUnarchiver` is the only Foundation
     /// API that understands typedstream; it's deprecated in favour of
-    /// `NSKeyedUnarchiver`, which CANNOT decode this format. Keep the
-    /// fallback explicit + wrapped in a deprecated function so the
-    /// suppression is documented in one place.
+    /// `NSKeyedUnarchiver`, which CANNOT decode this format.
     ///
-    /// `NSUnarchiver(forReadingWith:)` returns `nil` when the bytes
-    /// don't look like a typedstream archive (e.g. when we hand it a
-    /// bplist) — that's our cheap input-validation gate. Once the
-    /// initializer succeeds, `decodeObject()` is safe for the
-    /// well-formed typedstream blobs that chat.db produces.
-    @available(*, deprecated, message: "Intentional — required to decode legacy chat.db typedstream blobs that NSKeyedUnarchiver cannot handle.")
+    /// The call goes through the `HonkDecodeLegacyTypedstream` ObjC
+    /// shim (see `AttributedBodyDecoderShim.m`) because `NSUnarchiver`
+    /// raises NSExceptions on malformed input and Swift cannot catch
+    /// ObjC exceptions — an unwrapped call would abort the whole
+    /// archive run on a single corrupt chat.db row (review finding MH1).
+    /// The shim returns nil for both "not a typedstream" and "decoder
+    /// threw".
     private static func decodeLegacyTypedstream(_ data: Data) -> String? {
-        guard let unarchiver = NSUnarchiver(forReadingWith: data) else {
+        guard let decoded = HonkDecodeLegacyTypedstream(data) else {
             return nil
         }
-        let decoded = unarchiver.decodeObject()
         if let attr = decoded as? NSAttributedString {
             let s = attr.string
             return s.isEmpty ? nil : s

@@ -9,11 +9,11 @@ import CryptoKit
 /// reader + writer + archive schema without duplication.
 ///
 /// Port of `src/imessage_archiver/core/attachments.py`.
-public enum AttachmentScanner {
+enum AttachmentScanner {
 
     /// Classify `attachment` by checking whether its resolved file URL
     /// exists, is readable, and is non-empty.
-    public static func classify(
+    static func classify(
         _ attachment: SourceDBReader.AttachmentRow
     ) -> AttachmentState {
         guard let url = attachment.resolvedURL else {
@@ -47,7 +47,7 @@ public enum AttachmentScanner {
 
     /// Stream-hash a file in 1 MB chunks. Returns the lowercase hex
     /// SHA-256 digest.
-    public static func sha256(of url: URL) throws -> String {
+    static func sha256(of url: URL) throws -> String {
         guard let handle = try? FileHandle(forReadingFrom: url) else {
             throw SnapshotError.hashFailed
         }
@@ -67,7 +67,7 @@ public enum AttachmentScanner {
     /// Local error type. Kept narrow on purpose — full archive error
     /// taxonomy is in the existing `ArchiveError` enum used by the
     /// reader UI.
-    public enum SnapshotError: Error {
+    enum SnapshotError: Error {
         case hashFailed
     }
 }

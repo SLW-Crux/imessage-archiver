@@ -130,21 +130,32 @@ if ! find "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" -name "
 fi
 green "Developer ID profile '$DEVID_PROFILE_NAME' present"
 
-# Manual signing with the Developer ID Application cert + the
-# Developer ID Distribution provisioning profile. Without the profile
-# specifier, xcodebuild errors that "iMessageArchiverMac requires a
-# provisioning profile with the iCloud feature" because the iCloud
-# entitlement must be backed by a profile.
+# Automatic signing during Archive — Xcode will pick the matching Mac
+# Team Provisioning Profile + Apple Development cert for the app, and
+# unsigned builds for GRDB's library targets (which can't accept a
+# provisioning profile). Forcing Manual + PROVISIONING_PROFILE_SPECIFIER
+# on the CLI applies the setting to EVERY target including SPM
+# libraries, which then error with "GRDB_GRDB does not support
+# provisioning profiles."
+#
+# The Developer ID re-signing happens at the Export step below, where
+# the export plist's method=developer-id directs xcodebuild to
+# re-sign the .app with the Developer ID Application cert. That's
+# Apple's canonical Developer-ID-distribution flow.
+#
+# We still override DEVELOPMENT_TEAM on the CLI because project.yml's
+# value (the personal Apple Developer Program identifier visible in
+# the Apple Development cert's CN) is not the actual team identifier
+# xcodebuild's automatic provisioning resolves against.
 xcodebuild archive \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
     -configuration Release \
     -destination 'generic/platform=macOS' \
     -archivePath "$ARCHIVE_PATH" \
-    CODE_SIGN_STYLE=Manual \
-    CODE_SIGN_IDENTITY="Developer ID Application" \
+    -allowProvisioningUpdates \
+    CODE_SIGN_STYLE=Automatic \
     DEVELOPMENT_TEAM="$DEVID_TEAM" \
-    PROVISIONING_PROFILE_SPECIFIER="$DEVID_PROFILE_NAME" \
     > "$BUILD_DIR/archive.log" 2>&1 \
     || { red "xcodebuild archive failed — see $BUILD_DIR/archive.log"; tail -30 "$BUILD_DIR/archive.log"; exit 1; }
 green "Archive: $ARCHIVE_PATH"

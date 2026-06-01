@@ -12,51 +12,51 @@ import GRDB
 /// SQL queries are kept verbatim — they're a load-bearing description
 /// of `chat.db`'s schema, and the project's first hard-won lessons live
 /// in their column choices.
-public struct SourceDBReader {
+struct SourceDBReader {
 
-    public struct ChatRow: Sendable {
-        public let chatGuid: String
-        public let displayName: String?
-        public let chatIdentifier: String?
-        public let serviceName: String?
-        public let isGroup: Bool
-        public let participants: [String]
-        public let firstMessageAt: Int64?   // Unix epoch seconds
-        public let lastMessageAt: Int64?
-        public let messageCount: Int
+    struct ChatRow: Sendable {
+        let chatGuid: String
+        let displayName: String?
+        let chatIdentifier: String?
+        let serviceName: String?
+        let isGroup: Bool
+        let participants: [String]
+        let firstMessageAt: Int64?   // Unix epoch seconds
+        let lastMessageAt: Int64?
+        let messageCount: Int
     }
 
-    public struct MessageRow: Sendable {
-        public let messageGuid: String
-        public let chatGuid: String
-        public let senderHandle: String?
-        public let senderName: String?
-        public let timestamp: Int64         // Unix epoch seconds
-        public let text: String?
-        public let isFromMe: Bool
-        public let service: String?
-        public let replyToGuid: String?
-        public let associatedMessageGuid: String?
-        public let associatedMessageType: Int
-        public let hasAttachments: Bool
-        public let dateEdited: Int64?       // nil = never edited
-        public let dateRetracted: Int64?    // nil = not retracted
+    struct MessageRow: Sendable {
+        let messageGuid: String
+        let chatGuid: String
+        let senderHandle: String?
+        let senderName: String?
+        let timestamp: Int64         // Unix epoch seconds
+        let text: String?
+        let isFromMe: Bool
+        let service: String?
+        let replyToGuid: String?
+        let associatedMessageGuid: String?
+        let associatedMessageType: Int
+        let hasAttachments: Bool
+        let dateEdited: Int64?       // nil = never edited
+        let dateRetracted: Int64?    // nil = not retracted
     }
 
-    public struct AttachmentRow: Sendable {
-        public let attachmentGuid: String
-        public let messageGuid: String
-        public let filename: String?
-        public let mimeType: String?
-        public let uti: String?
-        public let size: Int64
-        public let resolvedURL: URL?        // nil if outside trusted roots
+    struct AttachmentRow: Sendable {
+        let attachmentGuid: String
+        let messageGuid: String
+        let filename: String?
+        let mimeType: String?
+        let uti: String?
+        let size: Int64
+        let resolvedURL: URL?        // nil if outside trusted roots
     }
 
     private let dbQueue: DatabaseQueue
     private let snapshotURL: URL
 
-    public init(snapshotURL: URL) throws {
+    init(snapshotURL: URL) throws {
         self.snapshotURL = snapshotURL
 
         var config = Configuration()
@@ -68,7 +68,7 @@ public struct SourceDBReader {
     // MARK: - Public API
 
     /// All chats sorted by most-recent-message-first.
-    public func chats() throws -> [ChatRow] {
+    func chats() throws -> [ChatRow] {
         try dbQueue.read { db in
             let rawChats = try Row.fetchAll(db, sql: """
                 SELECT ROWID, guid, display_name, chat_identifier, service_name, room_name
@@ -105,7 +105,7 @@ public struct SourceDBReader {
     }
 
     /// All messages for a chat, in chronological order.
-    public func messages(in chatGuid: String) throws -> [MessageRow] {
+    func messages(in chatGuid: String) throws -> [MessageRow] {
         try dbQueue.read { db in
             guard let chatRowID: Int64 = try Int64.fetchOne(
                 db,
@@ -141,7 +141,7 @@ public struct SourceDBReader {
     }
 
     /// All attachments referenced by a single message.
-    public func attachments(for messageGuid: String) throws -> [AttachmentRow] {
+    func attachments(for messageGuid: String) throws -> [AttachmentRow] {
         try dbQueue.read { db in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT

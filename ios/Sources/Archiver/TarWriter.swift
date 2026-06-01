@@ -14,7 +14,7 @@ import Foundation
 /// point at the data byte, never at a header byte.
 ///
 /// Port of `src/imessage_archiver/core/tar_writer.py`.
-public final class TarWriter {
+final class TarWriter {
 
     /// POSIX ustar block size — every record is a multiple of this.
     static let blockSize: Int = 512
@@ -26,7 +26,7 @@ public final class TarWriter {
     /// does, position before the trailing end-of-archive blocks so the
     /// next entry overwrites them — same behaviour as Python's
     /// `tarfile.open(..., 'a:')`.
-    public init(url: URL) throws {
+    init(url: URL) throws {
         self.url = url
         let fm = FileManager.default
         if !fm.fileExists(atPath: url.path) {
@@ -38,7 +38,7 @@ public final class TarWriter {
 
     /// Append `sourceURL`'s bytes as one tar entry. Returns
     /// `(tarOffset, tarLength)`.
-    public func append(
+    func append(
         attachmentGUID: String,
         sourceURL: URL,
         filename: String?
@@ -57,7 +57,6 @@ public final class TarWriter {
         // real entry — we replicate that so the file format stays
         // compatible. The exact PAX format isn't documented here; we
         // emit it only when needed.
-        let headerStart = try handle.offset()
         let usePAX = entryName.utf8.count > 100
 
         if usePAX {
@@ -79,11 +78,10 @@ public final class TarWriter {
         // explicitly — offsets can't exceed Int64.max on any realistic
         // tar (>9 EiB).
         let tarOffset = Int64(endOffset) - padded
-        _ = headerStart  // diagnostic-only; PAX path makes header_start + 512 wrong
         return (tarOffset, fileSize)
     }
 
-    public func close() throws {
+    func close() throws {
         try writeEndOfArchive()
         try handle.synchronize()
         try handle.close()
@@ -287,11 +285,11 @@ public final class TarWriter {
     }
 }
 
-public enum TarWriteError: Error, LocalizedError {
+enum TarWriteError: Error, LocalizedError {
     case sizeUnreadable(URL)
     case unexpectedEOF(URL)
 
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .sizeUnreadable(let url):
             return "Couldn't determine size of \(url.path)"

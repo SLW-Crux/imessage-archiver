@@ -11,12 +11,12 @@ import Foundation
 /// cleaning up).
 ///
 /// Port of `src/imessage_archiver/core/lock.py`.
-public final class ArchiveLock {
+final class ArchiveLock {
 
-    public enum Error: Swift.Error, LocalizedError {
+    enum Error: Swift.Error, LocalizedError {
         case held(byPID: Int32)
 
-        public var errorDescription: String? {
+        var errorDescription: String? {
             switch self {
             case .held(let pid):
                 return "Another archive process is already running (PID \(pid))."
@@ -25,7 +25,7 @@ public final class ArchiveLock {
     }
 
     /// Default lock location is alongside the user's working directory.
-    public static let defaultURL: URL = {
+    static let defaultURL: URL = {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".imessage-archiver/archive.lock")
     }()
@@ -33,12 +33,12 @@ public final class ArchiveLock {
     private let lockURL: URL
     private var ownedByMe: Bool = false
 
-    public init(lockURL: URL = ArchiveLock.defaultURL) {
+    init(lockURL: URL = ArchiveLock.defaultURL) {
         self.lockURL = lockURL
     }
 
     /// Acquire the lock. Throws `.held` if another live process owns it.
-    public func acquire() throws {
+    func acquire() throws {
         let fm = FileManager.default
         try fm.createDirectory(
             at: lockURL.deletingLastPathComponent(),
@@ -66,7 +66,7 @@ public final class ArchiveLock {
     }
 
     /// Release the lock. Idempotent.
-    public func release() {
+    func release() {
         guard ownedByMe else { return }
         try? FileManager.default.removeItem(at: lockURL)
         ownedByMe = false

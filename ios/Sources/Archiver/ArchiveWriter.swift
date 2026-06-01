@@ -20,14 +20,14 @@ import GRDB
 /// GRDB's DatabaseQueue is itself Sendable.
 ///
 /// Port of `src/imessage_archiver/core/archive.py`.
-public final class ArchiveWriter: @unchecked Sendable {
+final class ArchiveWriter: @unchecked Sendable {
 
     /// Frozen-contract schema version. Both Mac archiver and iOS reader
     /// refuse to open bundles whose schema version exceeds the value
     /// they were compiled with. Bump only when adding additive
     /// migrations. Matches Python's `SCHEMA_VERSION`.
-    public static let schemaVersion: Int = 1
-    public static let maxSupportedSchemaVersion: Int = 1
+    static let schemaVersion: Int = 1
+    static let maxSupportedSchemaVersion: Int = 1
 
     /// Schema DDL — identical to the Python original's `_DDL` string.
     static let ddl: String = """
@@ -104,20 +104,20 @@ public final class ArchiveWriter: @unchecked Sendable {
     CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments(message_guid);
     """
 
-    public struct RunStats: Sendable {
-        public var messagesSeen: Int = 0
-        public var messagesWritten: Int = 0
-        public var attachmentsSeen: Int = 0
-        public var attachmentsWritten: Int = 0
-        public var attachmentsMissing: Int = 0
+    struct RunStats: Sendable {
+        var messagesSeen: Int = 0
+        var messagesWritten: Int = 0
+        var attachmentsSeen: Int = 0
+        var attachmentsWritten: Int = 0
+        var attachmentsMissing: Int = 0
     }
 
-    public enum Error: Swift.Error, LocalizedError {
+    enum Error: Swift.Error, LocalizedError {
         case schemaTooNew(found: Int, supported: Int)
         case bundleSetupFailed(URL)
         case sqliteOpenFailed(underlying: Swift.Error)
 
-        public var errorDescription: String? {
+        var errorDescription: String? {
             switch self {
             case .schemaTooNew(let found, let supported):
                 return "Bundle schema version \(found) is newer than this archiver supports (\(supported))."
@@ -129,7 +129,7 @@ public final class ArchiveWriter: @unchecked Sendable {
         }
     }
 
-    public typealias ProgressCallback = @Sendable (SourceDBReader.ChatRow, RunStats) -> Void
+    typealias ProgressCallback = @Sendable (SourceDBReader.ChatRow, RunStats) -> Void
 
     private let bundleURL: URL
     private let sqliteURL: URL
@@ -138,7 +138,7 @@ public final class ArchiveWriter: @unchecked Sendable {
     private var dbQueue: DatabaseQueue?
     private let resolver: ContactsResolver
 
-    public init(
+    init(
         bundleURL: URL,
         contactsResolver: ContactsResolver = .shared
     ) {
@@ -154,7 +154,7 @@ public final class ArchiveWriter: @unchecked Sendable {
     /// Archive every chat/message/attachment from `reader` into the
     /// bundle. Returns final statistics.
     @discardableResult
-    public func run(
+    func run(
         reader: SourceDBReader,
         sourceSHA256: String = "",
         sourceDBPath: String = "",
@@ -217,7 +217,7 @@ public final class ArchiveWriter: @unchecked Sendable {
         return stats
     }
 
-    public func close() throws {
+    func close() throws {
         dbQueue = nil  // GRDB releases on deinit
     }
 

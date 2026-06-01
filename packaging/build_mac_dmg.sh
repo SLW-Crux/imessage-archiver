@@ -182,6 +182,11 @@ cat > "$DYNAMIC_EXPORT_OPTIONS" <<EOF
     <string>manual</string>
     <key>signingCertificate</key>
     <string>Developer ID Application</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.honk.imsgarchiver-mac</key>
+        <string>$DEVID_PROFILE_NAME</string>
+    </dict>
     <key>stripSwiftSymbols</key>
     <true/>
     <key>destination</key>
@@ -290,7 +295,12 @@ green "DMG notarization ticket stapled"
 # 7. Verify the final DMG is Gatekeeper-clean
 # -----------------------------------------------------------------
 cyan "Final verification"
-spctl -a -t open --context context:primary-signature -v "$DMG_PATH" 2>&1 | head -2 || true
+# The DMG itself isn't code-signed (DMGs carry stapled tickets, not
+# signatures) — `spctl --assess` would print a misleading "rejected /
+# no usable signature" here. The truthful Gatekeeper-equivalent
+# check is `stapler validate`, which confirms the notarization
+# ticket is present and valid on the DMG.
+xcrun stapler validate "$DMG_PATH" 2>&1 | tail -2 || true
 
 echo ""
 cyan "Done"

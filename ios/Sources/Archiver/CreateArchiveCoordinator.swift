@@ -12,9 +12,9 @@ import Observation
 #if os(macOS)
 @MainActor
 @Observable
-public final class CreateArchiveCoordinator {
+final class CreateArchiveCoordinator {
 
-    public enum Phase: Sendable {
+    enum Phase: Sendable {
         case idle
         case snapshotting
         case archiving(progress: Progress)
@@ -22,27 +22,27 @@ public final class CreateArchiveCoordinator {
         case succeeded(ArchiveWriter.RunStats)
         case failed(Swift.Error)
 
-        public struct Progress: Sendable {
-            public var chatTitle: String
-            public var messagesSeen: Int
-            public var messagesWritten: Int
-            public var attachmentsSeen: Int
-            public var attachmentsWritten: Int
-            public var attachmentsMissing: Int
+        struct Progress: Sendable {
+            var chatTitle: String
+            var messagesSeen: Int
+            var messagesWritten: Int
+            var attachmentsSeen: Int
+            var attachmentsWritten: Int
+            var attachmentsMissing: Int
         }
     }
 
-    public private(set) var phase: Phase = .idle
+    private(set) var phase: Phase = .idle
 
     /// Where to write the archive. Defaults to the Mac app's
     /// ubiquity container — the same path the iOS reader looks at
     /// after sync.
-    public let destinationBundleURL: URL?
+    let destinationBundleURL: URL?
 
     private let chatDBURL: URL
     private var task: Task<Void, Never>?
 
-    public init(
+    init(
         destinationBundleURL: URL? = Self.defaultDestination(),
         chatDBURL: URL = SourceDBSnapshotter.defaultSourceURL
     ) {
@@ -51,7 +51,7 @@ public final class CreateArchiveCoordinator {
     }
 
     /// Begin the archive run. No-op if a run is already in flight.
-    public func start() {
+    func start() {
         guard task == nil, let bundleURL = destinationBundleURL else { return }
         let chatDB = chatDBURL
 
@@ -62,7 +62,7 @@ public final class CreateArchiveCoordinator {
         }
     }
 
-    public func cancel() {
+    func cancel() {
         task?.cancel()
         task = nil
         phase = .idle
@@ -150,7 +150,7 @@ public final class CreateArchiveCoordinator {
     /// renamed Mac bundle. Returns `nil` if iCloud isn't available
     /// (the app must surface `.noContainer` in that case — same path
     /// the reader UI already handles).
-    public static func defaultDestination() -> URL? {
+    static func defaultDestination() -> URL? {
         let container = FileManager.default.url(
             forUbiquityContainerIdentifier: "iCloud.com.honk.imsgarchiver-mac"
         )

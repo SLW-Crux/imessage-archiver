@@ -14,11 +14,11 @@ import Contacts
 /// doesn't fire N+ identical CNContactStore queries.
 ///
 /// Port of `src/imessage_archiver/db/contacts.py`.
-public actor ContactsResolver {
+actor ContactsResolver {
 
     /// Shared resolver. Use this for archiver runs so the LRU cache
     /// survives across calls.
-    public static let shared = ContactsResolver()
+    static let shared = ContactsResolver()
 
     private let store: CNContactStore
     private var authorized: Bool?
@@ -38,7 +38,7 @@ public actor ContactsResolver {
         ]
     }
 
-    public init() {
+    init() {
         self.store = CNContactStore()
     }
 
@@ -46,7 +46,7 @@ public actor ContactsResolver {
     /// only an `.authorized` status counts; `.notDetermined` would hang
     /// a CNContactStore query waiting for a permission prompt that may
     /// never appear (e.g. CI runner with no GUI session).
-    public func isAuthorized() -> Bool {
+    func isAuthorized() -> Bool {
         if let cached = authorized { return cached }
         let status = CNContactStore.authorizationStatus(for: .contacts)
         let ok = (status == .authorized)
@@ -57,7 +57,7 @@ public actor ContactsResolver {
     /// Request Contacts access if not yet determined. Returns the final
     /// authorization state. Call once at archive start; subsequent
     /// `resolve(_:)` calls reuse the result.
-    public func requestAccessIfNeeded() async -> Bool {
+    func requestAccessIfNeeded() async -> Bool {
         let status = CNContactStore.authorizationStatus(for: .contacts)
         if status == .authorized {
             authorized = true
@@ -75,7 +75,7 @@ public actor ContactsResolver {
     /// Resolve `handle` (phone or email) to a display name. Returns the
     /// original `handle` string if no match is found or if Contacts is
     /// unavailable.
-    public func resolve(_ handle: String) -> String {
+    func resolve(_ handle: String) -> String {
         guard !handle.isEmpty else { return handle }
         if let cached = cache[handle] { return cached }
         guard isAuthorized() else { return handle }
@@ -95,7 +95,7 @@ public actor ContactsResolver {
 
     /// Reset the cache. Useful for tests / repeated archive runs in the
     /// same process.
-    public func clearCache() {
+    func clearCache() {
         cache.removeAll()
         authorized = nil
     }

@@ -8,20 +8,20 @@ import CryptoKit
 /// `archive.sqlite`.
 ///
 /// Port of `src/imessage_archiver/core/verify.py`.
-public enum ArchiveVerifier {
+enum ArchiveVerifier {
 
-    public struct Result: Sendable {
-        public var checked: Int = 0
-        public var mismatched: [String] = []  // attachment_guid strings
-        public var skipped: Int = 0           // non-LOCAL_PRESENT rows
+    struct Result: Sendable {
+        var checked: Int = 0
+        var mismatched: [String] = []  // attachment_guid strings
+        var skipped: Int = 0           // non-LOCAL_PRESENT rows
     }
 
-    public enum Error: Swift.Error, LocalizedError {
+    enum Error: Swift.Error, LocalizedError {
         case bundleMissing(URL)
         case dbOpenFailed(underlying: Swift.Error)
         case tarOpenFailed(underlying: Swift.Error)
 
-        public var errorDescription: String? {
+        var errorDescription: String? {
             switch self {
             case .bundleMissing(let url):
                 return "Archive bundle not found at \(url.path)."
@@ -37,7 +37,7 @@ public enum ArchiveVerifier {
     /// table, read its bytes from the tar at the stored
     /// `(tar_offset, tar_length)`, hash them, and compare to
     /// `attachments.sha256`. Returns the result struct.
-    public static func verify(
+    static func verify(
         bundleURL: URL,
         progress: (@Sendable (_ checked: Int, _ total: Int) -> Void)? = nil
     ) throws -> Result {

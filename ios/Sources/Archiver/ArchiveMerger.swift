@@ -12,14 +12,14 @@ import GRDB
 /// existing bundle.
 ///
 /// Port of `src/imessage_archiver/core/merge.py`.
-public enum ArchiveMerger {
+enum ArchiveMerger {
 
-    public enum Error: Swift.Error, LocalizedError {
+    enum Error: Swift.Error, LocalizedError {
         case bundleMissing(URL)
         case sourceOlderThanLastRun(sourceTimestamp: Int64, lastRunTimestamp: Int64)
         case dbOpenFailed(underlying: Swift.Error)
 
-        public var errorDescription: String? {
+        var errorDescription: String? {
             switch self {
             case .bundleMissing(let url):
                 return "Archive bundle not found at \(url.path)."
@@ -34,7 +34,7 @@ public enum ArchiveMerger {
     /// Pre-flight check: the source's newest message must not be older
     /// than the most recent archive run. If it is, the source is
     /// probably a stale backup or a snapshot from a different account.
-    public static func validateForMerge(
+    static func validateForMerge(
         bundleURL: URL,
         sourceReader: SourceDBReader
     ) throws {
@@ -80,7 +80,7 @@ public enum ArchiveMerger {
     /// Convenience wrapper: validate, then call ArchiveWriter.run().
     /// Returns the final stats.
     @discardableResult
-    public static func merge(
+    static func merge(
         bundleURL: URL,
         reader: SourceDBReader,
         sourceSHA256: String = "",

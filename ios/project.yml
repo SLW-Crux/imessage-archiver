@@ -2,15 +2,21 @@ name: iMessageArchiver
 options:
   bundleIdPrefix: com.honk
   deploymentTarget:
-    iOS: "17.0"
-    macOS: "14.0"
+    iOS: "26.0"
+    macOS: "26.0"
   xcodeVersion: "26.0"
   createIntermediateGroups: true
 
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    # Apple Silicon only. Drops x86_64 from every target — halves
+    # archive compile time and removes the redundant Intel build
+    # variant we never ship.
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: "NO"
     DEVELOPMENT_TEAM: "7V698GFQCM"
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.4.0"
@@ -37,7 +43,7 @@ targets:
     type: application
     platform: iOS
     bundleId: com.honk.imsgarchiver
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.0"
     sources:
       - path: Sources
         excludes:
@@ -66,7 +72,7 @@ targets:
             NSUbiquitousContainerName: iMessage Archiver
             NSUbiquitousContainerSupportedFolderLevels: Any
         UIRequiredDeviceCapabilities:
-          - armv7
+          - arm64
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -100,7 +106,7 @@ targets:
     type: application
     platform: macOS
     bundleId: com.honk.imsgarchiver-mac
-    deploymentTarget: "14.0"
+    deploymentTarget: "26.0"
     sources:
       - path: Sources
         excludes:
@@ -116,7 +122,7 @@ targets:
         CFBundleDisplayName: iMessage Archive
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        LSMinimumSystemVersion: "14.0"
+        LSMinimumSystemVersion: "26.0"
         NSUbiquitousContainers:
           iCloud.com.honk.imsgarchiver-mac:
             NSUbiquitousContainerIsDocumentScopePublic: true

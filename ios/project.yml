@@ -66,15 +66,11 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen:
           UIColorName: ""
+        # iOS reader opens the archive bundle the Mac archiver wrote
+        # into the -mac container. There is no iOS-side write path,
+        # so a separate iOS container would only ever be empty —
+        # don't declare one.
         NSUbiquitousContainers:
-          iCloud.com.honk.imsgarchiver:
-            NSUbiquitousContainerIsDocumentScopePublic: true
-            NSUbiquitousContainerName: iMessage Archiver
-            NSUbiquitousContainerSupportedFolderLevels: Any
-          # iOS reader opens the archive bundle the Mac archiver wrote
-          # into the -mac container. Both containers stay declared
-          # so the iOS app can fall back to its own scope; the active
-          # one the reader opens is the -mac container.
           iCloud.com.honk.imsgarchiver-mac:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: Honk iMessage Archiver
@@ -108,7 +104,6 @@ targets:
         cloudKit: false
         iCloudDocuments: true
         customContainers:
-          - iCloud.com.honk.imsgarchiver
           - iCloud.com.honk.imsgarchiver-mac
 
   iMessageArchiverMac:

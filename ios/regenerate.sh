@@ -16,7 +16,6 @@ cat > iMessageArchiver.entitlements <<'EOF'
 <dict>
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.honk.imsgarchiver</string>
         <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
     <key>com.apple.developer.icloud-services</key>
@@ -25,7 +24,6 @@ cat > iMessageArchiver.entitlements <<'EOF'
     </array>
     <key>com.apple.developer.ubiquity-container-identifiers</key>
     <array>
-        <string>iCloud.com.honk.imsgarchiver</string>
         <string>iCloud.com.honk.imsgarchiver-mac</string>
     </array>
 </dict>

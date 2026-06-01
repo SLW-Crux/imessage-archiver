@@ -5,9 +5,7 @@ import os
 // Both halves talk to the same iCloud container — the Mac archiver
 // writes the bundle, the iOS reader opens it from the same path. The
 // "-mac" suffix is a historical name kept for continuity with the
-// existing 23GB live archive; it is NOT Mac-only. The iOS app declares
-// access to the same container in its entitlements and NSUbiquitous-
-// Containers so iOS/Mac see one consistent archive.
+// existing live archive; it is NOT Mac-only.
 private let kContainerID = "iCloud.com.honk.imsgarchiver-mac"
 private let kBundleName  = "archive.imarchive"
 

@@ -22,15 +22,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.honk.imsgarchiver</key>
-		<dict>
-			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
-			<true/>
-			<key>NSUbiquitousContainerName</key>
-			<string>iMessage Archiver</string>
-			<key>NSUbiquitousContainerSupportedFolderLevels</key>
-			<string>Any</string>
-		</dict>
 		<key>iCloud.com.honk.imsgarchiver-mac</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>

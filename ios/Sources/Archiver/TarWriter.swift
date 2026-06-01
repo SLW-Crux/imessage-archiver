@@ -62,8 +62,19 @@ final class TarWriter {
         if usePAX {
             try writePAXExtendedHeader(name: entryName)
         }
+        // When the name needs to be shortened for the ustar header
+        // (PAX entry carries the full path), shorten on UTF-8 byte
+        // boundary, not on Swift Character index — `prefix(100)` is
+        // 100 graphemes, which can be hundreds of bytes; and slicing
+        // a UTF-8 byte view mid-codepoint produces invalid bytes
+        // that some tar readers reject (review finding MH7). We fall
+        // back to the attachment GUID prefix when the name has no
+        // pure-ASCII prefix to safely embed.
+        let nameForHeader = usePAX
+            ? Self.shortenForUstarHeader(entryName, guidPrefix: attachmentGUID)
+            : entryName
         try writeUstarHeader(
-            name: usePAX ? String(entryName.prefix(100)) : entryName,
+            name: nameForHeader,
             size: fileSize,
             mtime: mtime
         )
@@ -103,6 +114,25 @@ final class TarWriter {
         let trimmed = String(cleaned.prefix(80))
         let safe = trimmed.isEmpty ? "file" : trimmed
         return "\(guidPrefix)-\(safe)"
+    }
+
+    /// Shorten `entryName` for embedding in the 100-byte ustar header
+    /// field WITHOUT producing invalid UTF-8 (MH7). When the entire
+    /// name fits in ≤100 bytes we use it as-is. Otherwise we fall back
+    /// to the 36-char attachment GUID prefix — it's pure ASCII so the
+    /// byte/character math is trivial, and the PAX-extended `path`
+    /// record written before this header carries the authoritative
+    /// full name for readers that honour PAX.
+    static func shortenForUstarHeader(
+        _ entryName: String,
+        guidPrefix attachmentGUID: String
+    ) -> String {
+        if entryName.utf8.count <= 100 {
+            return entryName
+        }
+        let guidPrefix = String(attachmentGUID.prefix(36))
+        precondition(guidPrefix.utf8.count <= 100, "GUID prefix must fit in ustar name field")
+        return guidPrefix
     }
 
     // MARK: - Header writing

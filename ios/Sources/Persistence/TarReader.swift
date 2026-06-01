@@ -16,7 +16,7 @@ enum TarError: Error, LocalizedError {
         case .invalidOffset(let o):
             return "Invalid tar_offset: \(o) (must be non-negative)"
         case .invalidLength(let l):
-            return "Invalid tar_length: \(l) (must be non-negative and <= 2 GiB)"
+            return "Invalid tar_length: \(l) (must be non-negative and <= 256 MiB)"
         case .lengthExceedsFile(let o, let l, let f):
             return "Read range [\(o)..\(o+l)] exceeds tar file size \(f)"
         }
@@ -28,10 +28,17 @@ final class TarReader: @unchecked Sendable {
     private let fileSize: UInt64
     private let lock = NSLock()
 
-    /// Reject any single attachment larger than this. A corrupt or malicious
-    /// `tar_length` (e.g. a bit-flip turning 16 KB into 16 GB) would
-    /// otherwise allocate a multi-gigabyte `Data` and OOM-kill the app.
-    private static let maxAttachmentBytes: Int64 = 2 * 1024 * 1024 * 1024  // 2 GiB
+    /// Reject any single attachment larger than this. iMessage attachments
+    /// are practically capped at ~100 MB by Apple's own limits, so 256 MiB
+    /// is a comfortable ceiling that still catches bit-flips / crafted
+    /// `tar_length` values long before they OOM the app.
+    ///
+    /// This cap is enforced inside `extract()` so every caller inherits
+    /// the same bound regardless of their own validation
+    /// (review finding IC1 — `AttachmentCache` has a tighter 100 MB gate,
+    /// but `Thumbnailer` and any future caller without per-caller gates
+    /// still need this defense in depth).
+    private static let maxAttachmentBytes: Int64 = 256 * 1024 * 1024  // 256 MiB
 
     init(bundleURL: URL) throws {
         let tarURL = bundleURL.appendingPathComponent("attachments.tar")

@@ -137,6 +137,15 @@ struct ChatListView: View {
                     NavigationLink(value: SidebarDestination.chat(chat)) {
                         ChatRowView(chat: chat)
                     }
+                    // Tighter row insets so the avatar + text get more
+                    // horizontal room on wide screens (iPhone Pro Max,
+                    // iPad in landscape). System default eats ~20pt
+                    // leading and ~32pt trailing, which pushes the
+                    // preview text inward enough that leading words
+                    // can be clipped before the tail-truncation point.
+                    .listRowInsets(
+                        EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12)
+                    )
                 }
             }
         }

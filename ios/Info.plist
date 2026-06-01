@@ -31,6 +31,15 @@
 			<key>NSUbiquitousContainerSupportedFolderLevels</key>
 			<string>Any</string>
 		</dict>
+		<key>iCloud.com.honk.imsgarchiver-mac</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>Honk iMessage Archiver</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+		</dict>
 	</dict>
 	<key>UILaunchScreen</key>
 	<dict>

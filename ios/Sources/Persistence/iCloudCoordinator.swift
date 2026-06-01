@@ -2,16 +2,13 @@ import Foundation
 import Observation
 import os
 
-// iOS and Mac use distinct iCloud containers per Apple Developer
-// account setup. The Mac archiver writes into the -mac container; the
-// iOS reader reads from the no-suffix container. They don't share data
-// directly — the bundle is moved across by the user via iCloud Drive
-// (or copied) until/unless we add a sync helper.
-#if os(macOS)
+// Both halves talk to the same iCloud container — the Mac archiver
+// writes the bundle, the iOS reader opens it from the same path. The
+// "-mac" suffix is a historical name kept for continuity with the
+// existing 23GB live archive; it is NOT Mac-only. The iOS app declares
+// access to the same container in its entitlements and NSUbiquitous-
+// Containers so iOS/Mac see one consistent archive.
 private let kContainerID = "iCloud.com.honk.imsgarchiver-mac"
-#else
-private let kContainerID = "iCloud.com.honk.imsgarchiver"
-#endif
 private let kBundleName  = "archive.imarchive"
 
 @Observable

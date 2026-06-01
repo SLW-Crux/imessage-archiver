@@ -71,6 +71,14 @@ targets:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: iMessage Archiver
             NSUbiquitousContainerSupportedFolderLevels: Any
+          # iOS reader opens the archive bundle the Mac archiver wrote
+          # into the -mac container. Both containers stay declared
+          # so the iOS app can fall back to its own scope; the active
+          # one the reader opens is the -mac container.
+          iCloud.com.honk.imsgarchiver-mac:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: Honk iMessage Archiver
+            NSUbiquitousContainerSupportedFolderLevels: Any
         UIRequiredDeviceCapabilities:
           - arm64
         UISupportedInterfaceOrientations:
@@ -101,6 +109,7 @@ targets:
         iCloudDocuments: true
         customContainers:
           - iCloud.com.honk.imsgarchiver
+          - iCloud.com.honk.imsgarchiver-mac
 
   iMessageArchiverMac:
     type: application

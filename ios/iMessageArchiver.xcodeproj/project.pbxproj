@@ -53,6 +53,7 @@
 		752C5B4E20BC567363C60337 /* ArchiveReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821DD273186D880474C000C2 /* ArchiveReader.swift */; };
 		76947C3AFC132C0E21510144 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CCC8E8F50C965564FB672C /* AppState.swift */; };
 		792CDE7192D4557ED9D3ECAA /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5178B9E0F0DCA909252D77 /* ErrorView.swift */; };
+		7C50F959CB2C1A6D3744206F /* SQLiteURI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D7A6A2D649D7A7D9ECD1D1 /* SQLiteURI.swift */; };
 		7C712BBD5E96E0FFC364A9E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6339888AC50CF09276BDC2AB /* Assets.xcassets */; };
 		81DC55BD18579CD2EBAAA730 /* ArchiveError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCB24E02F5F74457705FB27 /* ArchiveError.swift */; };
 		831C1B3421AA5A85F517F58D /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5178B9E0F0DCA909252D77 /* ErrorView.swift */; };
@@ -83,6 +84,7 @@
 		D029473D461EC4D8A752D297 /* AttributedBodyDecoderShim.m in Sources */ = {isa = PBXBuildFile; fileRef = 06168CFC9EEB43A0FAC63858 /* AttributedBodyDecoderShim.m */; };
 		D44634E991BA7CA64F7389CD /* ArchiveReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */; };
 		D4C41BE680BB17DC9F0892B3 /* ArchiveError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCB24E02F5F74457705FB27 /* ArchiveError.swift */; };
+		D5ED4058E39900FE950C2476 /* SQLiteURI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D7A6A2D649D7A7D9ECD1D1 /* SQLiteURI.swift */; };
 		D90279873059321314FE7B80 /* CreateArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9C78B4B32DB1472C4C6D689 /* CreateArchiveView.swift */; };
 		D90C71E36B1A1A0135133490 /* SmartArchiveStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59595894EC167BDBD1D4D32F /* SmartArchiveStyle.swift */; };
 		DA00B377EEB0FA0D04025CC7 /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54ED66CB76580292C8852271 /* MessageBubbleView.swift */; };
@@ -157,6 +159,7 @@
 		BD2D46C17479F78A053C16EC /* SourceDBReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceDBReader.swift; sourceTree = "<group>"; };
 		BF7DF5B0142455FBF239D21B /* ArchiveReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveReaderTests.swift; sourceTree = "<group>"; };
 		BF8F6D071F91AD73673B9CC3 /* TarWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarWriter.swift; sourceTree = "<group>"; };
+		C2D7A6A2D649D7A7D9ECD1D1 /* SQLiteURI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteURI.swift; sourceTree = "<group>"; };
 		CEEF1850DEA6E7197739F0F1 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		D148226BF17196C2D46C01F5 /* CreateArchiveCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateArchiveCoordinator.swift; sourceTree = "<group>"; };
 		D9C78B4B32DB1472C4C6D689 /* CreateArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateArchiveView.swift; sourceTree = "<group>"; };
@@ -256,6 +259,7 @@
 				821DD273186D880474C000C2 /* ArchiveReader.swift */,
 				AF9EAB7890EFD8877280BF21 /* AttachmentCache.swift */,
 				2FC358B6FC2D4480D56C1989 /* iCloudCoordinator.swift */,
+				C2D7A6A2D649D7A7D9ECD1D1 /* SQLiteURI.swift */,
 				5327F4A7DB0B4FA7BC80895B /* TarReader.swift */,
 				E79A6136B490295EEE13264D /* Thumbnailer.swift */,
 			);
@@ -548,6 +552,7 @@
 				100FCD65EE824C769E2965F4 /* PlatformNavigation.swift in Sources */,
 				72A280A5A4B21AFBF3C6141D /* ReactionsView.swift in Sources */,
 				9384F09B01B464F4823AD347 /* RootView.swift in Sources */,
+				D5ED4058E39900FE950C2476 /* SQLiteURI.swift in Sources */,
 				B89FBE208A5114FE1D65903E /* SearchHit.swift in Sources */,
 				5AD40665C18294A14A1DD849 /* SearchView.swift in Sources */,
 				D90C71E36B1A1A0135133490 /* SmartArchiveStyle.swift in Sources */,
@@ -597,6 +602,7 @@
 				F2747F6856BAAF0343DAD42D /* PlatformNavigation.swift in Sources */,
 				C14D36C255EDA7CE2D57A102 /* ReactionsView.swift in Sources */,
 				07ACE7776D47533286F3DA51 /* RootView.swift in Sources */,
+				7C50F959CB2C1A6D3744206F /* SQLiteURI.swift in Sources */,
 				F905AAED12714FF4E5B9D183 /* SearchHit.swift in Sources */,
 				3B33A3DDAAD7898774A52432 /* SearchView.swift in Sources */,
 				0F3881A4C893DC5244170083 /* SmartArchiveStyle.swift in Sources */,

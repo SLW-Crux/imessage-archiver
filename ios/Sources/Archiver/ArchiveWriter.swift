@@ -91,12 +91,18 @@ final class ArchiveWriter: @unchecked Sendable {
       applied_at INTEGER NOT NULL
     );
 
+    -- Standalone FTS5 (content=''), NOT external-content tied to
+    -- the messages table. We insert message_guid + text + sender_name
+    -- directly; we never link the FTS rowid back to messages.rowid.
+    -- Declaring content='messages' previously was a lie that would
+    -- corrupt the search index if anyone ran the standard FTS5
+    -- 'rebuild' incantation (review finding MH4). Standalone matches
+    -- the actual write pattern; search behaviour is identical.
     CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
       message_guid UNINDEXED,
       text,
       sender_name,
-      content='messages',
-      content_rowid='rowid'
+      content=''
     );
 
     CREATE INDEX IF NOT EXISTS idx_messages_chat       ON messages(chat_guid, timestamp);

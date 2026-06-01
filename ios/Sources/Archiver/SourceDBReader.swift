@@ -61,7 +61,7 @@ struct SourceDBReader {
 
         var config = Configuration()
         config.readonly = true
-        let uri = "file:\(snapshotURL.path)?mode=ro&immutable=1"
+        let uri = SQLiteURI.readOnlyImmutable(path: snapshotURL.path)
         self.dbQueue = try DatabaseQueue(path: uri, configuration: config)
     }
 

@@ -47,7 +47,7 @@ enum ArchiveMerger {
 
         var config = Configuration()
         config.readonly = true
-        let uri = "file:\(sqliteURL.path)?mode=ro&immutable=1"
+        let uri = SQLiteURI.readOnlyImmutable(path: sqliteURL.path)
 
         let lastRunStart: Int64
         do {

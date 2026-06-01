@@ -112,8 +112,7 @@ struct SourceDBSnapshotter {
             throw SnapshotError.noFullDiskAccess
         }
 
-        let escapedSource = source.path
-        let sourceURI = "file:\(escapedSource)?mode=ro&immutable=1"
+        let sourceURI = SQLiteURI.readOnlyImmutable(path: source.path)
 
         var config = Configuration()
         config.readonly = true

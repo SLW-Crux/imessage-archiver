@@ -1,35 +1,45 @@
 # Status
 
 ## Current phase
-Post-review remediation complete. Awaiting Layer-7 manual sign-off for v1.0.0.
+Post-second-review remediation complete. Awaiting Layer-7 manual sign-off for v1.0.0.
 
 ## Completed
 - Phase 0–4: Foundations, DB reader, archive writer, CLI, PySide6 GUI
 - Phase 5a–5cf: iOS SwiftUI skeleton + search/polish
 - Phase 6: yearly workflow polish (Feb-29 fix, 10am default)
 - Phase 7: hardening — 50K-message stress, cross-version schema, incremental at scale
+- Plan B: complete native Swift port of the Mac archiver (PRs #52, #55–#57)
+- Honk rename + iCloud container migration (PR #50, hotfix #67–#68)
+- Notarized DMG release pipeline (PRs #58–#66)
 
-## Post-review remediation (PR #12–#18)
-Resolves 6 Critical + 14 High + ~18 Medium findings from a 4-agent code review:
+## Post-review remediation — Round 1 (PR #12–#18)
+Resolved 6 Critical + 14 High + ~18 Medium findings from the original 4-agent code review. See git history for detail.
 
-- **PR #12** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/12)): align Mac archiver destination with iOS ubiquity container (the two halves can now actually see each other); doc bundle-ID drift fix; .gitignore cleanup
-- **PR #13** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/13)): schema-version refusal + atomic writes (write→fsync→rename→fsync-parent) + lock O_EXCL atomicity + tapback filter
-- **PR #14** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/14)): GUI now reads from a snapshot (was opening live chat.db with immutable=1 — direct CLAUDE.md violation); worker race fixes (last-write-wins, closeEvent cleanup); pytest-qt + pytest-timeout
-- **PR #15** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/15)): iOS AttachmentCache path-traversal sanitisation + containment check; pin/unpin to protect QuickLook URL; TarReader bounds checks + short-read loop; JSON index sidecar
-- **PR #16** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/16)): iOS schema-version refusal; Reaction decoder accepts both Double + String timestamps; FTS5 query sanitisation; PUA sentinels (no FSI/PDI collisions); manifest-load failure path; event-token ordering
-- **PR #17** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/17)): attachment-path containment to ~/Library/Messages/Attachments/; attributed_body 2 MiB size cap; FDA detection distinguishes ENOENT from EACCES; subprocess returncode check
-- **PR #18** ([merged](https://github.com/SLW-Crux/imessage-archiver/pull/18)): CLI failure-path coverage; CI destructive-SQL grep self-test; real FTS5 content tests; deterministic fixture timestamps
+## Post-review remediation — Round 2 (PR #69–#73)
+Resolved 5 Critical + 15 High findings from the June 2026 review (`docs/REVIEW_2026-06.md`). One High deferred — see "Open" section below.
+
+- **PR #69 — PR-A: atomic writes & lockfile safety** — MC1 (orphaned WAL/SHM after rename), MC2 (ArchiveLock O_EXCL atomicity), MH3 (atomic manifest write).
+- **PR #70 — PR-B: process safety & crash containment** — MC3 (snapshot dir leak), MH1 (NSUnarchiver ObjC exception shim), MH2 (cancel/start race).
+- **PR #71 — PR-C: defensive parsing** — IC1 (TarReader cap 2 GiB → 256 MiB), IC2 (AttachmentCache symlink overwrite), IH2 (manifest schema_version required), IH3 (per-element Reaction decode), MH7 (TarWriter UTF-8 boundary), MH8 (per-chat try/catch in run).
+- **PR #72 — PR-D: concurrency & races** — IH1 (manifest read NSFileCoordinator), IH5 (NSMetadataQuery operationQueue), IH7 (ThreadView yearsTask cancellation), IH8 (SearchView post-await cancel check).
+- **PR #73 — PR-E: URI / FTS5 / query** — MH4 (FTS5 content='' fix), MH5 + IH6 (strict SQLite URI percent-encoding), IH4 (clamp messages/search LIMIT).
+
+## Open — Round 2 follow-ups
+- **MH6 — `attachment_guid` PRIMARY KEY drops N:M joins.** When one attachment is referenced by N messages (forwarded photo, repeat sticker), only the first survives. Fix needs a `message_attachments` link table + schema_version bump + migration plan for the existing 23 GB archive. Tracked separately because it forces a re-archive (or a one-time migration). Decide when ready for v1.0.0 tag.
+- ~36 Medium + Low findings deferred — agents' raw reports captured the detail; can be triaged in a follow-up pass.
 
 ## Test totals
-- **225 tests pass** (was 188 before remediation; +37 net) in 14.4s
-- ruff, black, mypy all clean
-- 21 Swift files parse-clean (`swiftc -parse`)
+- Swift: `xcodebuild test` — 6/6 passing
+- Mac compile (Debug): BUILD SUCCEEDED
+- End-to-end DMG: built, notarized (accepted), stapled, `stapler validate` OK → `dist/HonkiMessageArchiver-0.4.0.dmg`
+- iOS unit tests: 6/6 passing on iPhone 17 simulator
 
 ## Remaining — human gates only
-1. **Layer 7 manual checklist** — run archiver against your real chat.db, eyeball fidelity in Mac GUI + iOS app per docs/TEST_PLAN.md. Required per CLAUDE.md before `v1.0.0`.
-2. **Tag `v1.0.0`** — once Layer 7 signed off.
-3. **(Optional) Phase 5g TestFlight** — only if distributing to others.
+1. **Layer 7 manual checklist** — install on iPhone + iPad, eyeball fidelity vs the Mac app per `docs/TEST_PLAN.md`. PR #67 + #68 just unblocked this on the user's devices.
+2. **Decide on MH6** — re-archive or write migration path.
+3. **Tag `v1.0.0`** — once Layer 7 signed off and MH6 resolved.
+4. **(Optional) Phase 5g TestFlight** — only if distributing to others.
 
 ## Notes
-- `/code-review ultra` would be a useful second pass before v1.0.0 (more thorough than my 4-agent parallel review; user-billed/user-triggered).
-- iOS CI workflow expects an iOS Simulator runtime — you may need to install it via Xcode → Settings → Components if not already present.
+- `/code-review ultra` is queued as a third pass before tagging v1.0.0 (user-triggered, billed).
+- The Python codebase under `src/imessage_archiver/` was in scope for the review but the agents focused on the Swift port. Python is legacy; the production Mac archiver is now Swift end-to-end.

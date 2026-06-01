@@ -95,6 +95,17 @@ final class AttachmentCache {
             return cachedURL
         }
 
+        // Refuse to overwrite a symlink. On macOS (App Sandbox disabled
+        // per PR #29) a swapped-in symlink at the cache path would
+        // redirect the attachment bytes to a write target inside the
+        // user's home (review finding IC2). On iOS the sandbox bounds
+        // the blast radius but the check is cheap and defense in depth
+        // is the right default.
+        if let values = try? cachedURL.resourceValues(forKeys: [.isSymbolicLinkKey]),
+           values.isSymbolicLink == true {
+            try? FileManager.default.removeItem(at: cachedURL)
+        }
+
         // Extract + write on a background thread so the main actor is not
         // blocked by a multi-MB disk write.
         try await Task.detached(priority: .userInitiated) {

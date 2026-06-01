@@ -184,29 +184,39 @@ final class ArchiveWriter: @unchecked Sendable {
         defer { try? tar.close() }
 
         for chat in chats {
-            try await insertChat(chat, dbQueue: dbQueue)
+            // Per-chat try/catch so a single broken row (typically a
+            // chat.db column-type variance across macOS versions —
+            // see review finding MH8) doesn't abort the whole archive.
+            // Skip and continue; the run completes with the rest.
+            do {
+                try await insertChat(chat, dbQueue: dbQueue)
 
-            let messages = try reader.messages(in: chat.chatGuid)
-            for var msg in messages {
-                // Sender resolution via Contacts if we have it; falls
-                // through to the raw handle if not.
-                if !msg.isFromMe, let handle = msg.senderHandle {
-                    let resolved = await resolver.resolve(handle)
-                    if resolved != handle {
-                        msg = msg.withSenderName(resolved)
+                let messages = try reader.messages(in: chat.chatGuid)
+                for var msg in messages {
+                    // Sender resolution via Contacts if we have it; falls
+                    // through to the raw handle if not.
+                    if !msg.isFromMe, let handle = msg.senderHandle {
+                        let resolved = await resolver.resolve(handle)
+                        if resolved != handle {
+                            msg = msg.withSenderName(resolved)
+                        }
+                    }
+                    let inserted = try await insertMessage(msg, dbQueue: dbQueue)
+                    if inserted { stats.messagesWritten += 1 }
+                    stats.messagesSeen += 1
+
+                    let atts = try reader.attachments(for: msg.messageGuid)
+                    for att in atts {
+                        let result = try insertAttachment(att, tar: tar, dbQueue: dbQueue)
+                        stats.attachmentsSeen += 1
+                        if result.written { stats.attachmentsWritten += 1 }
+                        if result.state == .missing { stats.attachmentsMissing += 1 }
                     }
                 }
-                let inserted = try await insertMessage(msg, dbQueue: dbQueue)
-                if inserted { stats.messagesWritten += 1 }
-                stats.messagesSeen += 1
-
-                let atts = try reader.attachments(for: msg.messageGuid)
-                for att in atts {
-                    let result = try insertAttachment(att, tar: tar, dbQueue: dbQueue)
-                    stats.attachmentsSeen += 1
-                    if result.written { stats.attachmentsWritten += 1 }
-                    if result.state == .missing { stats.attachmentsMissing += 1 }
-                }
+            } catch {
+                // Skip this chat and continue. A half-archived bundle
+                // is more useful than no archive at all when one chat
+                // has a row that GRDB can't decode.
             }
             progress?(chat, stats)
         }

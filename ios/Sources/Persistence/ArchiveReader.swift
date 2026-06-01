@@ -340,8 +340,11 @@ final class ArchiveReader: Sendable {
 
     private static func messageFromRow(_ row: Row) -> Message {
         let reactionsJson = row["reactions_json"] as? String ?? "[]"
-        let reactions = (try? JSONDecoder().decode([Reaction].self,
-                                                   from: Data(reactionsJson.utf8))) ?? []
+        // Element-by-element decode so a single malformed reaction
+        // (e.g. timestamp as an array) drops only itself, not every
+        // reaction on the message. The previous `decode([Reaction].self)`
+        // was all-or-nothing on the whole array (review finding IH3).
+        let reactions = Self.decodeReactionsLossy(from: reactionsJson)
         return Message(
             messageGuid: row["message_guid"],
             chatGuid: row["chat_guid"],
@@ -356,6 +359,25 @@ final class ArchiveReader: Sendable {
             dateEdited: (row["date_edited"] as? Int64).map { Date(timeIntervalSince1970: Double($0)) },
             dateRetracted: (row["date_retracted"] as? Int64).map { Date(timeIntervalSince1970: Double($0)) }
         )
+    }
+
+    /// Decode reactions JSON one entry at a time. A single malformed
+    /// reaction (corrupt timestamp, missing field) is dropped without
+    /// affecting the rest. The whole-array `JSONDecoder().decode(
+    /// [Reaction].self, ...)` was all-or-nothing — one bad reaction
+    /// hid every reaction on the message (review finding IH3).
+    private static func decodeReactionsLossy(from json: String) -> [Reaction] {
+        let data = Data(json.utf8)
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [Any] else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        return array.compactMap { element in
+            guard let elementData = try? JSONSerialization.data(withJSONObject: element) else {
+                return nil
+            }
+            return try? decoder.decode(Reaction.self, from: elementData)
+        }
     }
 
     private static func attachmentFromRow(_ row: Row) -> Attachment {

@@ -11,10 +11,34 @@ struct ArchiveManifest: Sendable {
     let missingAttachmentCount: Int
     let archiveSizeBytes: Int64
 
+    enum ManifestError: Error, LocalizedError {
+        case missingOrInvalidSchemaVersion
+
+        var errorDescription: String? {
+            switch self {
+            case .missingOrInvalidSchemaVersion:
+                return "Archive manifest is missing or has an invalid " +
+                    "schema_version. The bundle may be corrupted or was " +
+                    "written by an incompatible archiver."
+            }
+        }
+    }
+
     static func load(bundleURL: URL) throws -> ArchiveManifest {
         let url = bundleURL.appendingPathComponent("manifest.json")
         let data = try Data(contentsOf: url)
         let raw = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
+
+        // schema_version MUST be present and an Int. Anything else (missing,
+        // wrong type, null, JSON corrupt) fails the load — defaulting to 1
+        // here would defeat the PR #16 schema-version refusal entirely:
+        // a v2 archive whose manifest got truncated would silently be
+        // opened as v1 and the reader would read garbage from columns
+        // that moved (review finding IH2).
+        guard let schemaVersion = raw["schema_version"] as? Int,
+              schemaVersion > 0 else {
+            throw ManifestError.missingOrInvalidSchemaVersion
+        }
 
         let iso = ISO8601DateFormatter()
         func date(_ key: String) -> Date {
@@ -22,7 +46,7 @@ struct ArchiveManifest: Sendable {
         }
 
         return ArchiveManifest(
-            schemaVersion: raw["schema_version"] as? Int ?? 1,
+            schemaVersion: schemaVersion,
             archiverVersion: raw["archiver_version"] as? String ?? "",
             createdAt: date("created_at"),
             lastUpdatedAt: date("last_updated_at"),

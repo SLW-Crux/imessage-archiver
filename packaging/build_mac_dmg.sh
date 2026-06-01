@@ -93,14 +93,37 @@ cyan "Archiving $SCHEME (this takes a couple of minutes)"
 rm -rf "$ARCHIVE_PATH" "$EXPORT_DIR"
 mkdir -p "$BUILD_DIR"
 
+# Extract the actual team identifier from the installed Developer ID
+# cert. The keychain identifier (e.g. G5TTCDCAUG) may differ from the
+# project.yml DEVELOPMENT_TEAM (7V698GFQCM, which iOS uses) when Apple
+# has migrated the account through a team rename — the cert OU is what
+# xcodebuild matches against, not what's printed in find-identity's
+# parenthetical.
+DEVID_LINE=$(security find-identity -v -p codesigning | /usr/bin/grep "Developer ID Application" | head -1)
+DEVID_TEAM=$(echo "$DEVID_LINE" | sed -E 's/.*\(([A-Z0-9]{10})\).*/\1/')
+if [ -z "$DEVID_TEAM" ]; then
+    red "Could not extract team identifier from Developer ID cert."
+    exit 1
+fi
+echo "    Using Developer ID team: $DEVID_TEAM"
+
+# Manual signing with the Developer ID Application cert directly.
+# Automatic signing would try to fetch a "Mac App Development"
+# provisioning profile for the bundle ID, which (a) isn't needed for
+# Developer ID distribution, and (b) wouldn't exist anyway since this
+# app isn't registered at developer.apple.com for development. Manual
+# + the explicit cert + an empty PROVISIONING_PROFILE_SPECIFIER tells
+# xcodebuild to sign with just the cert.
 xcodebuild archive \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
     -configuration Release \
     -destination 'generic/platform=macOS' \
     -archivePath "$ARCHIVE_PATH" \
-    -allowProvisioningUpdates \
-    CODE_SIGN_STYLE=Automatic \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="Developer ID Application" \
+    DEVELOPMENT_TEAM="$DEVID_TEAM" \
+    PROVISIONING_PROFILE_SPECIFIER="" \
     > "$BUILD_DIR/archive.log" 2>&1 \
     || { red "xcodebuild archive failed — see $BUILD_DIR/archive.log"; tail -30 "$BUILD_DIR/archive.log"; exit 1; }
 green "Archive: $ARCHIVE_PATH"
@@ -111,11 +134,34 @@ green "Archive: $ARCHIVE_PATH"
 cyan "Exporting + signing with Developer ID"
 mkdir -p "$EXPORT_DIR"
 
+# Build the ExportOptions plist on the fly so the team matches the
+# Developer ID cert we just extracted, rather than hardcoding it.
+DYNAMIC_EXPORT_OPTIONS="$BUILD_DIR/ExportOptions-generated.plist"
+cat > "$DYNAMIC_EXPORT_OPTIONS" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>developer-id</string>
+    <key>teamID</key>
+    <string>$DEVID_TEAM</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>destination</key>
+    <string>export</string>
+</dict>
+</plist>
+EOF
+
 xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$EXPORT_OPTIONS" \
-    -allowProvisioningUpdates \
+    -exportOptionsPlist "$DYNAMIC_EXPORT_OPTIONS" \
     > "$BUILD_DIR/export.log" 2>&1 \
     || { red "xcodebuild -exportArchive failed — see $BUILD_DIR/export.log"; tail -30 "$BUILD_DIR/export.log"; exit 1; }
 

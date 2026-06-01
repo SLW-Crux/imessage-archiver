@@ -143,20 +143,37 @@ struct SourceDBSnapshotter {
         )
     }
 
-    /// Sweep any leftover snapshot-* directories under `workRoot`.
-    /// Called at archive startup so a previously-crashed run's leak
-    /// gets reclaimed even if the coordinator never had a chance to
-    /// run its defer. Safe to call concurrently because each entry
-    /// has a UUID-named directory; we never touch the run we're
-    /// about to create (it hasn't been created yet).
+    /// Maximum plausible duration of a live archive run. Snapshot
+    /// directories with mtime newer than this from now are skipped by
+    /// `sweepLeftovers` because they may belong to a peer process
+    /// currently mid-VACUUM (review finding R3-C2 — the prior
+    /// unconditional sweep could `rm -rf` a peer's snapshot out from
+    /// under its in-flight VACUUM INTO).
+    private static let liveSnapshotMaxAge: TimeInterval = 3600  // 1 hour
+
+    /// Sweep stale snapshot-* directories under `workRoot`. Called at
+    /// archive startup so a previously-crashed run's leak gets reclaimed
+    /// even if the coordinator never had a chance to run its defer.
+    ///
+    /// Only sweeps directories whose mtime is older than
+    /// `liveSnapshotMaxAge` — anything more recent may belong to a
+    /// concurrent archive process. A 1 hour ceiling comfortably exceeds
+    /// any real VACUUM INTO completion time (multi-GB chat.db VACUUMs
+    /// finish in single-digit minutes on Apple Silicon) without leaving
+    /// crash leaks on disk indefinitely.
     static func sweepLeftovers(workRoot: URL = defaultWorkRoot) {
         let fm = FileManager.default
         guard let entries = try? fm.contentsOfDirectory(
             at: workRoot,
-            includingPropertiesForKeys: nil
+            includingPropertiesForKeys: [.contentModificationDateKey]
         ) else { return }
+        let cutoff = Date(timeIntervalSinceNow: -liveSnapshotMaxAge)
         for url in entries
         where url.lastPathComponent.hasPrefix("snapshot-") {
+            let mtime = (try? url.resourceValues(
+                forKeys: [.contentModificationDateKey]
+            ))?.contentModificationDate ?? Date.distantPast
+            if mtime > cutoff { continue }
             try? fm.removeItem(at: url)
         }
     }

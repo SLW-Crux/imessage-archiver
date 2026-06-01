@@ -235,36 +235,52 @@ final class ArchiveWriter: @unchecked Sendable {
         let isNew = !fm.fileExists(atPath: sqliteURL.path)
 
         do {
-            let target: URL
             if isNew {
-                // Write to a tmp file first, then rename for atomic visibility.
-                target = sqliteURL.appendingPathExtension("tmp")
+                // Build the new DB in a .tmp file using DELETE journal
+                // mode — no -wal/-shm siblings to orphan when we rename
+                // the main file. Only enable WAL after the rename, on
+                // the canonical path (review finding MC1).
+                let target = sqliteURL.appendingPathExtension("tmp")
                 if fm.fileExists(atPath: target.path) {
                     try fm.removeItem(at: target)
                 }
-            } else {
-                target = sqliteURL
-            }
 
-            let queue = try DatabaseQueue(path: target.path)
-            try queue.write { db in
-                try db.execute(sql: "PRAGMA journal_mode=WAL")
-                try db.execute(sql: "PRAGMA foreign_keys=ON")
-                try db.execute(sql: Self.ddl)
-                if isNew {
-                    try db.execute(
-                        sql: "INSERT OR IGNORE INTO schema_migrations VALUES (?, ?)",
-                        arguments: [Self.schemaVersion, Int(Date().timeIntervalSince1970)]
-                    )
+                // Local scope so the build queue is fully closed (GRDB
+                // releases on deinit) before we rename.
+                do {
+                    let buildQueue = try DatabaseQueue(path: target.path)
+                    try buildQueue.write { db in
+                        try db.execute(sql: "PRAGMA journal_mode=DELETE")
+                        try db.execute(sql: "PRAGMA foreign_keys=ON")
+                        try db.execute(sql: Self.ddl)
+                        try db.execute(
+                            sql: "INSERT OR IGNORE INTO schema_migrations VALUES (?, ?)",
+                            arguments: [Self.schemaVersion, Int(Date().timeIntervalSince1970)]
+                        )
+                    }
                 }
-            }
 
-            if isNew {
+                // Atomic rename — single file, no siblings to drag along.
                 try fm.moveItem(at: target, to: sqliteURL)
-                // Re-open the renamed file.
-                self.dbQueue = try DatabaseQueue(path: sqliteURL.path)
+
+                // Open the canonical path for the runtime workload and
+                // switch to WAL there. The -wal/-shm siblings created
+                // from here on share the same path stem as the main
+                // file, so subsequent reopens/checkpoints align.
+                let queue = try DatabaseQueue(path: sqliteURL.path)
+                try queue.write { db in
+                    try db.execute(sql: "PRAGMA journal_mode=WAL")
+                    try db.execute(sql: "PRAGMA foreign_keys=ON")
+                }
+                self.dbQueue = queue
             } else {
-                // Existing bundle — verify schema version is one we understand.
+                // Existing bundle — open in WAL mode, verify schema
+                // version is one we understand.
+                let queue = try DatabaseQueue(path: sqliteURL.path)
+                try queue.write { db in
+                    try db.execute(sql: "PRAGMA journal_mode=WAL")
+                    try db.execute(sql: "PRAGMA foreign_keys=ON")
+                }
                 let existing = try queue.read { db -> Int in
                     try Int.fetchOne(db, sql: "SELECT MAX(version) FROM schema_migrations") ?? 0
                 }
@@ -558,16 +574,21 @@ final class ArchiveWriter: @unchecked Sendable {
             options: [.prettyPrinted, .sortedKeys]
         )
 
-        // Atomic write: .tmp → rename.
+        // Atomic replace. The prior `removeItem(manifest)` + `moveItem(tmp
+        // → manifest)` sequence had a crash window where the manifest
+        // file was missing entirely (review finding MH3). `replaceItemAt`
+        // is rename-backed and atomic on APFS — either the new manifest
+        // is fully visible or the prior manifest stays in place.
         let tmp = manifestURL.appendingPathExtension("tmp")
         if fm.fileExists(atPath: tmp.path) {
             try fm.removeItem(at: tmp)
         }
         try data.write(to: tmp, options: .atomic)
         if fm.fileExists(atPath: manifestURL.path) {
-            try fm.removeItem(at: manifestURL)
+            _ = try fm.replaceItemAt(manifestURL, withItemAt: tmp)
+        } else {
+            try fm.moveItem(at: tmp, to: manifestURL)
         }
-        try fm.moveItem(at: tmp, to: manifestURL)
     }
 
     // MARK: - Counting helpers

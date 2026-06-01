@@ -58,7 +58,7 @@ enum ArchiveVerifier {
         do {
             var config = Configuration()
             config.readonly = true
-            let uri = "file:\(sqliteURL.path)?mode=ro&immutable=1"
+            let uri = SQLiteURI.readOnlyImmutable(path: sqliteURL.path)
             dbQueue = try DatabaseQueue(path: uri, configuration: config)
         } catch {
             throw Error.dbOpenFailed(underlying: error)

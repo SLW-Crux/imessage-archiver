@@ -21,6 +21,12 @@ final class ArchiveReader: Sendable {
     /// rather than silently mis-render unknown columns as nil.
     static let maxSupportedSchemaVersion = 1
 
+    /// Hard cap on rows returned by `messages` / `search`. Stops a
+    /// caller passing `Int.max` (or `0`, which used to silently drop
+    /// the LIMIT clause) from loading an entire 100k-message chat
+    /// into a single `[Message]` on the MainActor consumer (IH4).
+    static let maxQueryLimit = 1_000
+
     // DatabaseQueue, not DatabasePool. DatabasePool requires WAL mode,
     // which creates `archive.sqlite-wal` and `-shm` companion files next
     // to the SQLite. For bundles in an iCloud-managed Documents folder
@@ -88,13 +94,13 @@ final class ArchiveReader: Sendable {
         at sqliteURL: URL,
         configuration: Configuration
     ) throws -> DatabaseQueue {
-        // Percent-encode the path so spaces and other URL-unsafe
-        // characters survive the URI parse. The path-encoded form is
-        // what sqlite3_open_v2 expects after the `file:` scheme.
-        let encoded = sqliteURL.path.addingPercentEncoding(
-            withAllowedCharacters: .urlPathAllowed
-        ) ?? sqliteURL.path
-        let uri = "file:\(encoded)?mode=ro&immutable=1"
+        // Percent-encode the path strictly enough that `?`, `#`, `&`
+        // inside the path don't split the URI at the wrong separator
+        // (which could re-parse e.g. `?mode=rwc` from a path substring
+        // and reopen WRITABLE — review finding IH6). `.urlPathAllowed`
+        // leaves those alone; SQLiteURI removes them from the allowed
+        // set so they get percent-encoded.
+        let uri = SQLiteURI.readOnlyImmutable(path: sqliteURL.path)
 
         let coordinator = NSFileCoordinator(filePresenter: nil)
         var coordinationError: NSError?
@@ -174,7 +180,12 @@ final class ArchiveReader: Sendable {
     /// first call would return the oldest 200 messages in the chat —
     /// not what anyone wants when they open a conversation.
     func messages(in chatGuid: String, limit: Int = 200, before: Date? = nil) async throws -> [Message] {
-        try await dbQueue.read { db in
+        // Clamp limit so callers can't load an entire 100k-message chat
+        // into a single [Message] on the MainActor consumer by passing
+        // 0 (which used to silently drop the LIMIT) or Int.max
+        // (review finding IH4).
+        let safeLimit = max(1, min(limit, Self.maxQueryLimit))
+        return try await dbQueue.read { db in
             var sql = """
                 SELECT message_guid, chat_guid, sender_handle, sender_name,
                        timestamp, text, is_from_me, reply_to_guid,
@@ -187,11 +198,8 @@ final class ArchiveReader: Sendable {
                 sql += " AND timestamp < ?"
                 args.append(Int64(before.timeIntervalSince1970))
             }
-            sql += " ORDER BY timestamp DESC"
-            if limit > 0 {
-                sql += " LIMIT ?"
-                args.append(limit)
-            }
+            sql += " ORDER BY timestamp DESC LIMIT ?"
+            args.append(safeLimit)
             let rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(args))
             return rows.map(Self.messageFromRow).reversed()
         }
@@ -201,6 +209,7 @@ final class ArchiveReader: Sendable {
     /// chronological order. Drives the year-picker "jump to year" flow
     /// in `ThreadView`.
     func messages(in chatGuid: String, fromYear year: Int, limit: Int = 200) async throws -> [Message] {
+        let safeLimit = max(1, min(limit, Self.maxQueryLimit))
         let yearStart = Calendar.current.date(from: DateComponents(year: year)) ?? Date()
         let yearStartUnix = Int64(yearStart.timeIntervalSince1970)
         return try await dbQueue.read { db in
@@ -212,7 +221,7 @@ final class ArchiveReader: Sendable {
                 WHERE chat_guid = ? AND timestamp >= ?
                 ORDER BY timestamp ASC
                 LIMIT ?
-                """, arguments: [chatGuid, yearStartUnix, limit])
+                """, arguments: [chatGuid, yearStartUnix, safeLimit])
             return rows.map(Self.messageFromRow)
         }
     }
@@ -269,6 +278,7 @@ final class ArchiveReader: Sendable {
     func search(query: String, limit: Int = 100) async throws -> [SearchHit] {
         let sanitised = Self.sanitiseFTS5Query(query)
         guard !sanitised.isEmpty else { return [] }
+        let safeLimit = max(1, min(limit, Self.maxQueryLimit))
         return try await dbQueue.read { db in
             // SQLite FTS5 snippet(table, col, before, after, ellipsis, tokens):
             // col -1 = all FTS-indexed columns. Markers are Private Use Area
@@ -287,7 +297,7 @@ final class ArchiveReader: Sendable {
                 WHERE messages_fts MATCH ?
                 ORDER BY rank
                 LIMIT ?
-                """, arguments: [sanitised, limit])
+                """, arguments: [sanitised, safeLimit])
             return rows.map { row in
                 SearchHit(
                     message: Self.messageFromRow(row),

@@ -23,12 +23,22 @@ struct ChatRowView: View {
                     }
                 }
                 if !chat.lastPreview.isEmpty {
-                    Text(chat.lastPreview).chatPreviewStyle()
+                    Text(chat.lastPreview)
+                        .chatPreviewStyle()
+                        // Defense against SwiftUI auto-detecting bidi text
+                        // (a preview starting with an emoji or RTL char)
+                        // and right-aligning it inside the row, which on
+                        // wide screens (iPhone Pro Max / iPad landscape)
+                        // would clip the leading words.
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 } else if chat.isGroup {
                     // Empty preview on a group chat — surface participant
                     // count rather than a totally blank row.
                     Text("\(chat.participants.count) participants")
                         .chatPreviewStyle()
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             // Claim the full remaining row width so the inner HStack's

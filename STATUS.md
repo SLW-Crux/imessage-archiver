@@ -25,8 +25,10 @@ Resolved 5 Critical + 15 High findings from the June 2026 review (`docs/REVIEW_2
 - **PR #73 — PR-E: URI / FTS5 / query** — MH4 (FTS5 content='' fix), MH5 + IH6 (strict SQLite URI percent-encoding), IH4 (clamp messages/search LIMIT).
 
 ## Open — Round 2 follow-ups
-- **MH6 — `attachment_guid` PRIMARY KEY drops N:M joins.** When one attachment is referenced by N messages (forwarded photo, repeat sticker), only the first survives. Fix needs a `message_attachments` link table + schema_version bump + migration plan for the existing 23 GB archive. Tracked separately because it forces a re-archive (or a one-time migration). Decide when ready for v1.0.0 tag.
 - ~36 Medium + Low findings deferred — agents' raw reports captured the detail; can be triaged in a follow-up pass.
+
+## Known limitations (won't fix)
+- **MH6 — N:M attachment joins not preserved.** Same physical attachment referenced from multiple messages is shown only on the first. Cosmetic loss on a rare case; schema change would force re-archive of the 23 GB live bundle. Documented in `docs/SCHEMA.md`.
 
 ## Test totals
 - Swift: `xcodebuild test` — 6/6 passing
@@ -36,9 +38,8 @@ Resolved 5 Critical + 15 High findings from the June 2026 review (`docs/REVIEW_2
 
 ## Remaining — human gates only
 1. **Layer 7 manual checklist** — install on iPhone + iPad, eyeball fidelity vs the Mac app per `docs/TEST_PLAN.md`. PR #67 + #68 just unblocked this on the user's devices.
-2. **Decide on MH6** — re-archive or write migration path.
-3. **Tag `v1.0.0`** — once Layer 7 signed off and MH6 resolved.
-4. **(Optional) Phase 5g TestFlight** — only if distributing to others.
+2. **Tag `v1.0.0`** — once Layer 7 signed off.
+3. **(Optional) Phase 5g TestFlight** — only if distributing to others.
 
 ## Notes
 - `/code-review ultra` is queued as a third pass before tagging v1.0.0 (user-triggered, billed).

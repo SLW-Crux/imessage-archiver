@@ -113,7 +113,14 @@ struct ThreadView: View {
                     }
                 }
             } label: {
+                // The date-jump menu was previously a plain-weight
+                // SF Symbol, easy to miss against the navigation bar.
+                // Bumped to large scale + semibold weight + the app's
+                // accent tint so users actually see it as an action.
                 Image(systemName: "calendar")
+                    .imageScale(.large)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentColor)
                     .accessibilityLabel("Jump to year")
             }
         }

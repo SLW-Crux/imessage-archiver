@@ -102,6 +102,14 @@ CREATE INDEX idx_attachments_message ON attachments(message_guid);
 - `tar_offset` points to the first byte of FILE DATA (= header_start + 512). iOS reader: `seek(tar_offset)`, `read(tar_length)`.
 - Tapback messages are stored as normal `messages` rows (`associated_message_type != 0`) AND their effect is denormalised into the target message's `reactions_json`.
 
+### Known limitation — attachment ↔ message is N:1, not N:M
+
+`attachments.attachment_guid` is the PRIMARY KEY and `message_guid` is a regular column. When the same attachment is referenced by more than one message in `chat.db` (forwarded photo, repeat sticker, sent-then-quoted media), only the **first** message's link is stored. The iOS reader queries `WHERE attachments.message_guid = ?` so messages 2..N show "Not Included" for that attachment.
+
+This is a design trade-off frozen at `schema_version 1`. Fixing it requires a `message_attachments` link table, a `schema_version 2` bump, and a one-time migration path for existing archives. We have explicitly chosen not to take that work — the overwhelming majority of attachments are referenced by exactly one message; the loss is cosmetic on the rare N>1 case.
+
+Originally reported as finding MH6 in `docs/REVIEW_2026-06.md`; closed as a documented limitation rather than a fix.
+
 ---
 
 ## attachments.tar Format

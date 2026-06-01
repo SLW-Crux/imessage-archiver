@@ -190,39 +190,62 @@ final class ArchiveWriter: @unchecked Sendable {
         defer { try? tar.close() }
 
         for chat in chats {
-            // Per-chat try/catch so a single broken row (typically a
-            // chat.db column-type variance across macOS versions —
-            // see review finding MH8) doesn't abort the whole archive.
-            // Skip and continue; the run completes with the rest.
+            // Cooperative cancellation check at the chat boundary.
+            // VACUUM and other long ops are non-cancellable from Swift
+            // but the chat loop runs sub-second per row, so checking
+            // here gives the user near-immediate cancel response.
+            try Task.checkCancellation()
+
+            // Insert the chat row itself — writer-side failures
+            // (SQLITE_BUSY, IOERR, disk-full) MUST propagate.
+            try await insertChat(chat, dbQueue: dbQueue)
+
+            // Source-side read of this chat's messages. A failure
+            // here is the case MH8 cared about (chat.db column-type
+            // variance across macOS versions) — skip the chat and
+            // continue. Writer-side errors below are NOT caught here.
+            //
+            // Critical: the prior bare `catch { }` wrapped the entire
+            // chat loop including writer ops, swallowing SQLITE_BUSY /
+            // disk-full / CancellationError and producing "successful"
+            // archives missing data with no log (review finding R3-C4).
+            let messages: [SourceDBReader.MessageRow]
             do {
-                try await insertChat(chat, dbQueue: dbQueue)
+                messages = try reader.messages(in: chat.chatGuid)
+            } catch {
+                progress?(chat, stats)
+                continue
+            }
 
-                let messages = try reader.messages(in: chat.chatGuid)
-                for var msg in messages {
-                    // Sender resolution via Contacts if we have it; falls
-                    // through to the raw handle if not.
-                    if !msg.isFromMe, let handle = msg.senderHandle {
-                        let resolved = await resolver.resolve(handle)
-                        if resolved != handle {
-                            msg = msg.withSenderName(resolved)
-                        }
-                    }
-                    let inserted = try await insertMessage(msg, dbQueue: dbQueue)
-                    if inserted { stats.messagesWritten += 1 }
-                    stats.messagesSeen += 1
-
-                    let atts = try reader.attachments(for: msg.messageGuid)
-                    for att in atts {
-                        let result = try insertAttachment(att, tar: tar, dbQueue: dbQueue)
-                        stats.attachmentsSeen += 1
-                        if result.written { stats.attachmentsWritten += 1 }
-                        if result.state == .missing { stats.attachmentsMissing += 1 }
+            for var msg in messages {
+                // Sender resolution via Contacts if we have it; falls
+                // through to the raw handle if not.
+                if !msg.isFromMe, let handle = msg.senderHandle {
+                    let resolved = await resolver.resolve(handle)
+                    if resolved != handle {
+                        msg = msg.withSenderName(resolved)
                     }
                 }
-            } catch {
-                // Skip this chat and continue. A half-archived bundle
-                // is more useful than no archive at all when one chat
-                // has a row that GRDB can't decode.
+                // Writer-side: propagate on error.
+                let inserted = try await insertMessage(msg, dbQueue: dbQueue)
+                if inserted { stats.messagesWritten += 1 }
+                stats.messagesSeen += 1
+
+                // Source-side per-message: skip just this message's
+                // attachments on read failure, keep the message itself.
+                let atts: [SourceDBReader.AttachmentRow]
+                do {
+                    atts = try reader.attachments(for: msg.messageGuid)
+                } catch {
+                    continue
+                }
+                for att in atts {
+                    // Writer/tar-side: propagate.
+                    let result = try insertAttachment(att, tar: tar, dbQueue: dbQueue)
+                    stats.attachmentsSeen += 1
+                    if result.written { stats.attachmentsWritten += 1 }
+                    if result.state == .missing { stats.attachmentsMissing += 1 }
+                }
             }
             progress?(chat, stats)
         }
@@ -290,21 +313,40 @@ final class ArchiveWriter: @unchecked Sendable {
                 }
                 self.dbQueue = queue
             } else {
-                // Existing bundle — open in WAL mode, verify schema
-                // version is one we understand.
+                // Existing bundle — probe the schema version READ-ONLY
+                // first via a URI-immutable open. We must not write
+                // PRAGMA journal_mode=WAL or any other byte to a bundle
+                // whose schema is newer than we understand — that would
+                // mutate a bundle we have no contract for and violates
+                // the non-destructive guarantee (review finding R3-C1).
+                do {
+                    var probeConfig = Configuration()
+                    probeConfig.readonly = true
+                    let probeURI = SQLiteURI.readOnlyImmutable(path: sqliteURL.path)
+                    let probeQueue = try DatabaseQueue(
+                        path: probeURI,
+                        configuration: probeConfig
+                    )
+                    let existing = try probeQueue.read { db -> Int in
+                        try Int.fetchOne(db, sql: "SELECT MAX(version) FROM schema_migrations") ?? 0
+                    }
+                    if existing > Self.maxSupportedSchemaVersion {
+                        throw Error.schemaTooNew(
+                            found: existing,
+                            supported: Self.maxSupportedSchemaVersion
+                        )
+                    }
+                    // probeQueue goes out of scope here so its file
+                    // handle is released before the writable open
+                    // below opens the same file.
+                }
+
+                // Schema is understood — open writable and set runtime
+                // pragmas.
                 let queue = try DatabaseQueue(path: sqliteURL.path)
                 try queue.write { db in
                     try db.execute(sql: "PRAGMA journal_mode=WAL")
                     try db.execute(sql: "PRAGMA foreign_keys=ON")
-                }
-                let existing = try queue.read { db -> Int in
-                    try Int.fetchOne(db, sql: "SELECT MAX(version) FROM schema_migrations") ?? 0
-                }
-                if existing > Self.maxSupportedSchemaVersion {
-                    throw Error.schemaTooNew(
-                        found: existing,
-                        supported: Self.maxSupportedSchemaVersion
-                    )
                 }
                 self.dbQueue = queue
             }

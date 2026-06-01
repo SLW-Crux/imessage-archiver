@@ -61,8 +61,20 @@ enum AttributedBodyDecoder {
             return s.isEmpty ? nil : s
         }
         // Some bplist blobs have a different top-level class (NSString,
-        // NSMutableString). Try the unsafe-but-broader fallback.
-        if let any = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) {
+        // NSMutableString). Try the broader decode using the modern
+        // unarchivedObject(ofClasses:from:) API — a union of every
+        // class chat.db is known to use — so we don't fall through
+        // to the deprecated unarchiveTopLevelObjectWithData. Same
+        // behaviour, no deprecation warning.
+        if let any = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClasses: [
+                NSAttributedString.self,
+                NSMutableAttributedString.self,
+                NSString.self,
+                NSMutableString.self,
+            ],
+            from: data
+        ) {
             if let attr = any as? NSAttributedString {
                 let s = attr.string
                 return s.isEmpty ? nil : s

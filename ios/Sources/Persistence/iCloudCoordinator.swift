@@ -89,6 +89,13 @@ final class iCloudCoordinator {
         query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
         query.predicate = NSPredicate(format: "%K == %@",
                                        NSMetadataItemFSNameKey, kBundleName)
+        // Land notifications directly on the main queue so the
+        // disable/enable + result(at:) sequence inside the handler is
+        // synchronously bracketed against the query's own mutations.
+        // Without this, the MainActor task hop in queryDidUpdate races
+        // the next-arriving notification against the in-flight reader
+        // (review finding IH5).
+        query.operationQueue = .main
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(queryDidUpdate(_:)),
@@ -201,7 +208,11 @@ final class iCloudCoordinator {
     private func handleReady(bundleURL: URL) {
         let manifestURL = bundleURL.appendingPathComponent("manifest.json")
         do {
-            let manifest = try ArchiveManifest.load(bundleURL: bundleURL)
+            // Read the manifest under an NSFileCoordinator read intent
+            // so iCloud doesn't evict the JSON mid-read or hand us a
+            // partial download (review finding IH1). Matches the pattern
+            // ArchiveReader uses for archive.sqlite (PR #30).
+            let manifest = try Self.coordinatedManifestLoad(bundleURL: bundleURL)
             let updatedAt = manifest.lastUpdatedAt
             if let previous = lastSeenUpdatedAt, updatedAt > previous {
                 NotificationCenter.default.post(
@@ -217,6 +228,36 @@ final class iCloudCoordinator {
             // download and stay in .downloading.
             state = .downloading(progress: 0)
             try? FileManager.default.startDownloadingUbiquitousItem(at: manifestURL)
+        }
+    }
+
+    /// Load the manifest under an `NSFileCoordinator` read intent so the
+    /// underlying iCloud file provider can't evict the JSON while we're
+    /// reading it. Mirrors ArchiveReader's coordinated sqlite open.
+    private static func coordinatedManifestLoad(bundleURL: URL) throws -> ArchiveManifest {
+        let manifestURL = bundleURL.appendingPathComponent("manifest.json")
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordError: NSError?
+        var loaded: Result<ArchiveManifest, Swift.Error>?
+        coordinator.coordinate(
+            readingItemAt: manifestURL,
+            options: [.withoutChanges],
+            error: &coordError
+        ) { _ in
+            do {
+                loaded = .success(try ArchiveManifest.load(bundleURL: bundleURL))
+            } catch {
+                loaded = .failure(error)
+            }
+        }
+        if let coordError { throw coordError }
+        switch loaded {
+        case .success(let m): return m
+        case .failure(let e): throw e
+        case .none:
+            // Should be unreachable — the coordinate block always runs
+            // when coordError is nil — but guard against the analyzer.
+            throw ArchiveManifest.ManifestError.missingOrInvalidSchemaVersion
         }
     }
 }

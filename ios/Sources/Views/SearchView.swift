@@ -42,6 +42,11 @@ struct SearchView: View {
         }
         await MainActor.run { isSearching = true }
         let results = (try? await reader.search(query: q)) ?? []
+        // Recheck cancellation AFTER the expensive search await. Without
+        // this, a fast-typing user can let a stale query's results land
+        // on top of the fresh ones — visible as "cat" briefly showing
+        // results for "ca" after "cat" ones (review finding IH8).
+        guard !Task.isCancelled else { return }
         await MainActor.run {
             hits = results
             isSearching = false

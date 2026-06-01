@@ -12,6 +12,7 @@ struct ThreadView: View {
     @State private var attachmentCache = AttachmentCache()
     @State private var tarReader: TarReader?
     @State private var loadTask: Task<Void, Never>?
+    @State private var yearsTask: Task<Void, Never>?
     /// Set by `loadFromYear` so the next layout pass scrolls to the
     /// first message of the chosen year. Cleared on completion so
     /// later loads (loadMore appending) don't disturb scroll position.
@@ -88,7 +89,10 @@ struct ThreadView: View {
                 yearPickerMenu
             }
         }
-        .onDisappear { loadTask?.cancel() }
+        .onDisappear {
+            loadTask?.cancel()
+            yearsTask?.cancel()
+        }
     }
 
     @ViewBuilder
@@ -137,10 +141,15 @@ struct ThreadView: View {
 
             // Year picker is a nice-to-have — load it in a detached
             // task so it never blocks the visible thread / attachments.
+            // Store the handle so onDisappear can cancel it; otherwise
+            // the years query keeps running after the view dismantles
+            // and writes to a @State that no longer exists (review
+            // finding IH7).
             let chatGuid = chat.chatGuid
             let reader = reader
-            Task { @MainActor in
+            yearsTask = Task { @MainActor in
                 let years = (try? await reader.years(in: chatGuid)) ?? []
+                guard !Task.isCancelled else { return }
                 availableYears = years
             }
         } catch is CancellationError {
